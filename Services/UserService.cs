@@ -44,9 +44,9 @@ namespace Backend.Services
         Task<User> GetByEmail(Log log,string email);
         Task<User> UpdateUserInfo(Log log, int id, string userCookie);
         Task<User> GetUserUpdatedInfo(Log log,string email,string emailLoggedIn);
-        Task<PaymentNotification> AddPaymentNotification(Log log,PaymentNotification paymentNotification);
+        Task<PaymentNotification> AddPaymentNotification(Log log,PaymentNotification paymentNotification,IFormFile[] images);
         Task<List<PaymentNotification>> GetAllPaymentNotification(Log log,string type);
-        Task<List<PaymentNotification>> PaymentNotificationByEmail(Log log,string type,string email);
+        Task<List<PaymentNotification>> GetPaymentNotificationByEmail(Log log,string type,string email);
         Task Delete(Log log,int id);
     }
 
@@ -116,16 +116,16 @@ namespace Backend.Services
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            ThreadPool.QueueUserWorkItem(o => {
+            //ThreadPool.QueueUserWorkItem(o => {
                 var url = GlobalVariables.URL + "/vaccount?em=" + user.Email + "&vc=" + user.EmailConfirmationCode;
                 var link = $"<a href='{url}'>Click here</a>";
                 string body = "Dear " + user.FirstName + ",<br/><br/>Thank you for registering with RotatePay.<br/><br/>" +
-                "Click on the link below to confirm your email address. <br/><br/>" + link + "<br/><br/>" +
-                " If the link above can not be clicked, copy and paste the url below in your browser<br/>" + url + "<br/><br/><br/>" +
-                "Thank you<br/>RotatePay<br/>";                
+                    "Click on the link below to confirm your email address. <br/><br/>" + link + "<br/><br/>" +
+                    " If the link above can not be clicked, copy and paste the url below in your browser<br/>" + url + "<br/><br/><br/>" +
+                    "Thanks,<br/>The RotatePay Team<br/>";                
                 var message = new Message(new string[] { user.Email }, "[RotatePay] Confirm your email address", body, null);
                 _emailSenderService.SendEmail(message);     
-            });  
+            //});  
 
             //await _logService.Create(log);
             return user;
@@ -142,16 +142,16 @@ namespace Backend.Services
             _context.Users.Update(user);
             await _context.SaveChangesAsync();    
 
-            ThreadPool.QueueUserWorkItem(o => {
+            //ThreadPool.QueueUserWorkItem(o => {
                 var url = GlobalVariables.URL + "/password?em=" + user.Email + "&vc=" + verificationCode;
                 var link = $"<a href='{url}'>Click here</a>";
                 string body = "Dear " + user.FirstName + ",<br/><br/>You have requested to change your RotatePay account password.<br/><br/>" +
-                "Click on the link below to change your account password. <br/><br/>" + link + "<br/><br/>" +
-                " If the link above can not be clicked, copy and paste the url below in your browser<br/>" + url + "<br/><br/><br/>" +
-                "Thank you<br/>RotatePay<br/>";                
+                    "Click on the link below to change your account password. <br/><br/>" + link + "<br/><br/>" +
+                    " If the link above can not be clicked, copy and paste the url below in your browser<br/>" + url + "<br/><br/><br/>" +
+                    "Thanks,<br/>The RotatePay Team<br/>";              
                 var message = new Message(new string[] { user.Email }, "[RotatePay] Change your Account Password", body, null);
                 _emailSenderService.SendEmail(message);     
-            });               
+            //});               
 
             return JsonConvert.SerializeObject(user.Email);             
         } 
@@ -214,16 +214,16 @@ namespace Backend.Services
                 throw new AppException("Invalid verification attempt by user detected");
             }
 
-            ThreadPool.QueueUserWorkItem(o => {
+            //ThreadPool.QueueUserWorkItem(o => {
                 var url = GlobalVariables.URL + "/vaccount?em=" + user.Email + "&vc=" + user.EmailConfirmationCode;
                 var link = $"<a href='{url}'>Click here</a>";
                 string body = "Dear " + user.FirstName + ",<br/><br/>You have requested for a verification email.<br/><br/>" +
-                "Click on the link below to confirm your email address. <br/><br/>" + link + "<br/><br/>" +
-                " If the link above can not be clicked, copy and paste the url below in your browser<br/>" + url + "<br/><br/><br/>" +
-                "Thank you<br/>RotatePay<br/>";                
+                    "Click on the link below to confirm your email address. <br/><br/>" + link + "<br/><br/>" +
+                    " If the link above can not be clicked, copy and paste the url below in your browser<br/>" + url + "<br/><br/><br/>" +
+                    "Thanks,<br/>The RotatePay Team<br/>";              
                 var message = new Message(new string[] { user.Email }, "[RotatePay] Confirm your email address", body, null);
                 _emailSenderService.SendEmail(message);       
-            });                      
+            //});                      
 
             return JsonConvert.SerializeObject(user.Email);  
         }           
@@ -320,7 +320,7 @@ namespace Backend.Services
             user.WorkStatus = userParam.WorkStatus;  
             user.PlaceOfWorkName = userParam.PlaceOfWorkName;
             user.PlaceOfWorkAddress = userParam.PlaceOfWorkAddress;    
-            //user.DateOfBirth = userParam.DateOfBirth;  
+            user.DateOfBirth = userParam.DateOfBirth;  
             //user.BVN = userParam.BVN;          
             user.BankName = userParam.BankName;
             user.AccountNumber = userParam.AccountNumber;
@@ -466,11 +466,11 @@ namespace Backend.Services
             await _context.SaveChangesAsync();
 
             if (userParam.ImageNames.Contains("Changed")) { 
-                ThreadPool.QueueUserWorkItem(o => {
+                //ThreadPool.QueueUserWorkItem(o => {
                     string body = "<br/><br/>The attached documents were sent by: " + user.FirstName + " (" + user.Email + ")<br/><br/>";                   
-                    var message = new Message(new string[] { GlobalVariables.DocumentEmail }, "[RotatePay] Uploaded Documents by " + user.Email, body, images);
+                    var message = new Message(new string[] { GlobalVariables.DocumentEmail }, "[RotatePay] Profile documents by " + user.Email, body, images);
                     _emailSenderService.SendEmail(message);    
-                });   
+                //});   
                 userUpload.DateAdded = userLocalDate_Nigeria;
                 _context.UserUploads.Add(userUpload);     
                 await _context.SaveChangesAsync();           
@@ -558,12 +558,72 @@ namespace Backend.Services
             }  
         }                   
 
-        public async Task<PaymentNotification> AddPaymentNotification(Log log,PaymentNotification paymentNotification)
+        public async Task<PaymentNotification> AddPaymentNotification(Log log,PaymentNotification paymentNotification,IFormFile[] images)
         {
             var user = await _context.Users.Where(x => x.Email == paymentNotification.Email).FirstOrDefaultAsync();
             if (user == null) {
                 throw new AppException("User is not found");
-            }                                            
+            }      
+
+            if (images != null) {
+                for (int i = 0; i < images.Length; i++) {
+                    if (images[i] != null && images[i].Length > 0) {                        
+                        var file = images[i];
+                        if (file.Length > 0) {
+                            if (!file.ContentType.StartsWith("image")) {
+                                var fileLength = file.Length/1024;
+                                var maxFileLength = 5120;
+                                if (fileLength > maxFileLength) {
+                                    throw new AppException("Uploaded file must not be more than 5MB!");
+                                }
+                            }
+                        }
+                    }
+                }
+            }                   
+
+            if (images != null) {
+                for (int i = 0; i < images.Length; i++) {
+                    Bitmap originalFile = null;
+                    Bitmap resizedFile = null;
+                    int imgWidth = 0;
+                    int imgHeigth = 0;               
+                    if ((i == 0) && (images[i] != null) && (images[i].Length > 0))
+                    {    
+                        var uploads = Path.GetFullPath(Path.Combine(GlobalVariables.ImagePath, @"images\payment"));                  
+                        var file = images[i];
+                        if (file.Length > 0)
+                        {
+                            var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim();
+                            string uniqueFileName = paymentNotification.FirstName.Substring(0,5) + i + DateTime.Now + file.FileName;
+                            string uniqueFileNameTrimmed = uniqueFileName.Replace(":", "").Replace("-", "").Replace(" ", "").Replace("/", "");
+
+                            using (var fileStream = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
+                            {
+                                await file.CopyToAsync(fileStream);
+                                paymentNotification.ImageNames = "......" + uniqueFileNameTrimmed;
+
+                                if (file.ContentType.StartsWith("image")) {
+                                    int width = 200;
+                                    int height = 200;
+                                    originalFile = new Bitmap(fileStream);
+                                    resizedFile = ResizeImage.GetResizedImage(fileStream,width,height,width,height);
+                                }   
+                            }
+
+                            if (resizedFile != null)
+                            {
+                                imgWidth = resizedFile.Width;
+                                imgHeigth = resizedFile.Height;
+                                using (var fileStreamUp = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
+                                {
+                                    resizedFile.Save(fileStreamUp, ImageFormat.Jpeg);
+                                }
+                            }
+                        }
+                    }                    
+                }                             
+            }   
 
             DateTime userLocalDate_Nigeria = new DateTime();
             string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
@@ -573,14 +633,18 @@ namespace Backend.Services
             await _context.PaymentNotifications.AddAsync(paymentNotification);
             await _context.SaveChangesAsync();
 
-            ThreadPool.QueueUserWorkItem(o => {
+            //ThreadPool.QueueUserWorkItem(o => {
                 string body = "Dear " + paymentNotification.FirstName + ",<br/><br/>Thank you for submitting your payment notification.<br/><br/>" +
-                "We will confirm your payment and update your profile online.<br/><br/>" + 
-                "You will also receive an email from us as soon as we have confirmed your payment<br/><br/>" +
-                "Thank you<br/>RotatePay<br/>";                
-                var message = new Message(new string[] { paymentNotification.Email }, "[RotatePay] Payment Notification", body, null);
+                    "We will confirm your payment and update your online profile.<br/><br/>" + 
+                    "You will also receive an email from us as soon as we have confirmed your payment<br/><br/>" +
+                    "Thanks,<br/>The RotatePay Team<br/>";          
+                var message = new Message(new string[] { paymentNotification.Email }, "[RotatePay] Payment Notification Received", body, null);
                 _emailSenderService.SendEmail(message);     
-            });   
+
+                string body1 = paymentNotification.FirstName + "(" + paymentNotification.Email + ") has submitted the payment notification form.<br/><br/><br/>";
+                var message1 = new Message(new string[] { GlobalVariables.AdminEmail }, "[RotatePay] Payment document by " + paymentNotification.Email, body1, images);
+                _emailSenderService.SendEmail(message1);
+            //});   
 
             //await _logService.Create(log);
             return paymentNotification;            
@@ -594,7 +658,7 @@ namespace Backend.Services
                 return await _context.PaymentNotifications.Where(x => x.Type == type).ToListAsync();
             }
         }
-        public async Task<List<PaymentNotification>> PaymentNotificationByEmail(Log log,string type,string email)
+        public async Task<List<PaymentNotification>> GetPaymentNotificationByEmail(Log log,string type,string email)
         {
             if (type == "All") {
                 return await _context.PaymentNotifications.Where(x => x.Email == email).ToListAsync();

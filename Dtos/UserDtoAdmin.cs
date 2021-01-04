@@ -25,7 +25,7 @@ namespace Backend.Dtos
         public IFormFile[] Images { get; set; }    
         public string ImageNames { get; set; }
         public string Role { get; set; }   
-        //public DateTime DateOfBirth { get; set; }   // Can be useful leter so do not delete      
+        public DateTime DateOfBirth { get; set; }   // Can be useful leter so do not delete      
         //public string BVN { get; set; }   // Can be useful leter so do not delete         
         //public string Integration { get; set; }   // Can be useful leter so do not delete      
         //public string SubAccountCode { get; set; }   // Can be useful leter so do not delete               

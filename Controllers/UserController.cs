@@ -345,7 +345,7 @@ namespace Backend.Controllers
                     Detail = dt
                 };                          
                 var paymentNotification = _mapper.Map<PaymentNotification>(paymentNotificationDto);                    
-                var addedPaymentNotification = await _userService.AddPaymentNotification(newLog,paymentNotification);
+                var addedPaymentNotification = await _userService.AddPaymentNotification(newLog,paymentNotification,paymentNotificationDto.Images);
                 return Ok(addedPaymentNotification);               
             } 
             catch(AppException ex)
@@ -355,24 +355,24 @@ namespace Backend.Controllers
         }   
 
         [HttpGet("galpayn/{usrgalpayn}")]
-        public async Task<IActionResult> GetAllPaymentNotification(string ow, string dt, string type)
+        public async Task<IActionResult> GetAllPaymentNotification(string ow, string dt, string tpe)
         {
             var newLog = new Log {
                 Owner = ow,
                 Detail = dt
             };              
-            var allPaymentNotification = await _userService.GetAllPaymentNotification(newLog,type);
+            var allPaymentNotification = await _userService.GetAllPaymentNotification(newLog,tpe);
             return Ok(allPaymentNotification);
         }      
 
         [HttpGet("paynbem/{usrpaynbem}")]
-        public async Task<IActionResult> PaymentNotificationByEmail(string ow, string dt, string type, string em)
+        public async Task<IActionResult> GetPaymentNotificationByEmail(string ow, string dt, string tpe, string em)
         {
             var newLog = new Log {
                 Owner = ow,
                 Detail = dt
             };              
-            var paymentNotificationByUserId = await _userService.PaymentNotificationByEmail(newLog,type,em);
+            var paymentNotificationByUserId = await _userService.GetPaymentNotificationByEmail(newLog,tpe,em);
             return Ok(paymentNotificationByUserId);
         }     
 

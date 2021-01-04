@@ -14,7 +14,8 @@ namespace Backend.Entities
         public string PaymentChannel { get; set; }     
         public DateTime PaymentDateAndTime { get; set; } 
         public string DepositorName { get; set; }
-        public string AdditionalDetails { get; set; }            
+        public string AdditionalDetails { get; set; }      
+        public string ImageNames { get; set; }        
         public DateTime DateAdded { get; set; }      
         public string DateAddedDisplay 
         {

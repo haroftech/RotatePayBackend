@@ -1,6 +1,5 @@
 using System;
-using Backend.Helpers;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace Backend.Dtos
 {
@@ -14,7 +13,9 @@ namespace Backend.Dtos
         public string PaymentChannel { get; set; }     
         public DateTime PaymentDateAndTime { get; set; } 
         public string DepositorName { get; set; }
-        public string AdditionalDetails { get; set; }            
+        public string AdditionalDetails { get; set; }     
+        public IFormFile[] Images { get; set; }    
+        public string ImageNames { get; set; }               
         public DateTime DateAdded { get; set; }      
         public string DateAddedDisplay { get; set; } 
     

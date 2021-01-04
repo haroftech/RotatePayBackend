@@ -21,7 +21,7 @@ namespace Backend.Dtos
         public string AccountNumber { get; set; } 
         public string BankCode { get; set; }      
         public string ImageNames { get; set; }     
-        //public DateTime DateOfBirth { get; set; }   // Do not delete           
+        public DateTime DateOfBirth { get; set; }   // Do not delete           
         //public string BVN { get; set; }   // Do not delete            
         public Boolean ContributionLimitSet { get; set;} 
         public double ContributionLimit { get; set;}        
