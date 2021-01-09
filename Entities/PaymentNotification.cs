@@ -7,6 +7,7 @@ namespace Backend.Entities
     public class PaymentNotification
     {
         public int Id { get; set; }      
+        public string Reference { get; set; } 
         public string Type { get; set; } 
         public string Email { get; set; }
         public string FirstName { get; set; }
@@ -14,9 +15,12 @@ namespace Backend.Entities
         public string PaymentChannel { get; set; }     
         public DateTime PaymentDateAndTime { get; set; } 
         public string DepositorName { get; set; }
-        public string AdditionalDetails { get; set; }      
+        public string AdditionalDetails { get; set; }    
+        public Boolean UpdateAllowed { get; set; }    
+        public string Confirmed { get; set; }      
         public string ImageNames { get; set; }        
         public DateTime DateAdded { get; set; }      
+        public DateTime DateEdited { get; set; }      
         public string DateAddedDisplay 
         {
             get

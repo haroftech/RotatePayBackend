@@ -32,22 +32,20 @@ namespace Backend.Services
 
     public interface IUserService
     {
-        Task<User> Create(Log log,User user, string password);
-        Task<String> RequestPasswordReset(Log log,string email,int verificationCode);
-        Task<User> ResetPassword(Log log,string email,string currentPassword,string password,int resetCode);
-        Task<String> RequestVerification(Log log,string email);      
-        Task<User> Verify(Log log,string email,int verificationCode);
-        Task<User> Authenticate(Log log,string email, string password);
-        Task<IList<User>> GetAll(Log log);
-        Task<User> Update(Log log,User user, IFormFile[] images, string password = null);      
-        Task<User> GetByUserId(Log log,int userId);
-        Task<User> GetByEmail(Log log,string email);
-        Task<User> UpdateUserInfo(Log log, int id, string userCookie);
-        Task<User> GetUserUpdatedInfo(Log log,string email,string emailLoggedIn);
-        Task<PaymentNotification> AddPaymentNotification(Log log,PaymentNotification paymentNotification,IFormFile[] images);
-        Task<List<PaymentNotification>> GetAllPaymentNotification(Log log,string type);
-        Task<List<PaymentNotification>> GetPaymentNotificationByEmail(Log log,string type,string email);
-        Task Delete(Log log,int id);
+        Task<User> Create(User user, string password);
+        Task<String> RequestPasswordReset(string email,int verificationCode);
+        Task<User> ResetPassword(string email,string currentPassword,string password,int resetCode);
+        Task<String> RequestVerification(string email);      
+        Task<User> Verify(string email,int verificationCode);
+        Task<User> Authenticate(string email, string password);
+        Task<IList<User>> GetAllUsersAdmin();
+        Task<User> Update(User user, IFormFile[] images, string password = null);      
+        Task<User> GetByHiDee(string hiDee);
+        Task<User> UpdateUserInfo( int id, string userCookie);
+        Task<User> AddPaymentNotification(PaymentNotification paymentNotification,IFormFile[] images);
+        Task<PaymentNotification> UpdatePaymentNotification(PaymentNotification paymentNotification,IFormFile[] images);
+        Task<List<PaymentNotification>> GetPaymentNotificationsByHiDee(string type,string hiDee);
+        Task Delete(int id);
     }
 
     public class UserService : IUserService
@@ -69,7 +67,7 @@ namespace Backend.Services
         }
 
 
-        public async Task<User> Create(Log log,User user,string password)
+        public async Task<User> Create(User user,string password)
         {
             // validation
             if (string.IsNullOrWhiteSpace(password)) {
@@ -86,7 +84,12 @@ namespace Backend.Services
 
             if (user.FirstName.Length > 15) {
                 throw new AppException("First name is too long");
-            }                                  
+            }     
+
+            if (user.Surname.ToUpper().Contains("ROTATE") || user.FirstName.ToUpper().Contains("ROTATE") 
+                || user.Surname.ToUpper().Contains("PAY") || user.FirstName.ToUpper().Contains("PAY")) {
+                throw new AppException("Surname or Firstname is not available");
+            }                                         
 
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
@@ -131,7 +134,7 @@ namespace Backend.Services
             return user;
         }
 
-        public async Task<String> RequestPasswordReset(Log log,string email,int verificationCode)
+        public async Task<String> RequestPasswordReset(string email,int verificationCode)
         {
             var user = await _context.Users.Where(x => x.Email == email).FirstOrDefaultAsync();   
             if (user == null) {
@@ -156,7 +159,7 @@ namespace Backend.Services
             return JsonConvert.SerializeObject(user.Email);             
         } 
 
-        public async Task<User> ResetPassword(Log log,string email,string currentPassword,string password,int resetCode)
+        public async Task<User> ResetPassword(string email,string currentPassword,string password,int resetCode)
         {
             if (string.IsNullOrWhiteSpace(password)) {
                 throw new AppException("Invalid password reset attempt detected");
@@ -203,7 +206,7 @@ namespace Backend.Services
             }
         }           
 
-        public async Task<String> RequestVerification(Log log,string email)
+        public async Task<String> RequestVerification(string email)
         {
             var user = await _context.Users.Where(x => x.Email == email).FirstOrDefaultAsync();   
             if (user == null) {
@@ -228,7 +231,7 @@ namespace Backend.Services
             return JsonConvert.SerializeObject(user.Email);  
         }           
 
-        public async Task<User> Verify(Log log,string email,int verificationCode)
+        public async Task<User> Verify(string email,int verificationCode)
         {
             var user = _context.Users.Where(x => x.Email == email).FirstOrDefault();   
             if (user == null) {
@@ -249,7 +252,7 @@ namespace Backend.Services
             }             
         }   
 
-        public async Task<User> Authenticate(Log log,string email,string password)
+        public async Task<User> Authenticate(string email,string password)
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password)) {
                 return null;
@@ -271,12 +274,12 @@ namespace Backend.Services
             return user;
         }
 
-        public async Task<IList<User>> GetAll(Log log)
+        public async Task<IList<User>> GetAllUsersAdmin()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Users.OrderByDescending(x => x.DateAdded).ToListAsync();
         }
 
-        public async Task<User> Update(Log log,User userParam, IFormFile[] images, string password = null)
+        public async Task<User> Update(User userParam, IFormFile[] images, string password = null)
         {
             if (userParam.FirstName.Length < 5) {
                 throw new AppException("First name is too short");
@@ -286,8 +289,12 @@ namespace Backend.Services
                 throw new AppException("First name is too long");
             }              
 
-            var user = await _context.Users.FindAsync(userParam.Id);
+            /*if (userParam.Surname.ToUpper().Contains("ROTATE") || userParam.FirstName.ToUpper().Contains("ROTATE") 
+                || userParam.Surname.ToUpper().Contains("PAY") || userParam.FirstName.ToUpper().Contains("PAY")) {
+                throw new AppException("Surname or Firstname is not available");
+            } */      
 
+            var user = await _context.Users.FindAsync(userParam.Id);
             if (user == null) {
                 throw new AppException("User is not found");
             }              
@@ -322,6 +329,8 @@ namespace Backend.Services
             user.PlaceOfWorkAddress = userParam.PlaceOfWorkAddress;    
             user.DateOfBirth = userParam.DateOfBirth;  
             //user.BVN = userParam.BVN;          
+            user.DesiredContributionAmount = userParam.DesiredContributionAmount;
+            user.OptOutOfContributionLimit = userParam.OptOutOfContributionLimit;
             user.BankName = userParam.BankName;
             user.AccountNumber = userParam.AccountNumber;
             if (!String.IsNullOrEmpty(userParam.BankCode)) {
@@ -460,7 +469,8 @@ namespace Backend.Services
             DateTime userLocalDate_Nigeria = new DateTime();
             string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
             userLocalDate_Nigeria = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZone));                       
-            user.DateEdited = userLocalDate_Nigeria;              
+            user.DateEdited = userLocalDate_Nigeria;            
+            user.LastSeen = userLocalDate_Nigeria;              
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
@@ -480,17 +490,12 @@ namespace Backend.Services
             return user;
         }
 
-        public async Task<User> GetByUserId(Log log,int userId)
+        public async Task<User> GetByHiDee(string hiDee)
         {
-            return await _context.Users.FindAsync(userId);
-        }
+            return await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
+        }        
 
-        public async Task<User> GetByEmail(Log log,string email)
-        {
-            return await _context.Users.Where(x => x.Email.ToUpper() == email.ToUpper()).FirstOrDefaultAsync();
-        }
-
-        public async Task<User> UpdateUserInfo(Log log,int id,string userCookie)
+        public async Task<User> UpdateUserInfo(int id,string userCookie)
         {
             var user = await _context.Users.FindAsync(id);
             if (user != null) {
@@ -531,34 +536,12 @@ namespace Backend.Services
                 user.LastSeen = userLocalDate_Nigeria;      
                 _context.Users.Update(user);
 
-                await GetUserUpdatedInfo(log,user.Email,null);
                 await _context.SaveChangesAsync();                
             }                        
             return user;
-        }   
+        }             
 
-        public async Task<User> GetUserUpdatedInfo(Log log,string email,string emailLoggedIn) 
-        {
-            var user = await _context.Users.Where(x => x.Email.ToUpper() == email.ToUpper()).FirstOrDefaultAsync();
-            if (user != null) {
-                if (emailLoggedIn != null) {
-                    if (email == emailLoggedIn) {
-                        DateTime userLocalDate_Nigeria = new DateTime();
-                        string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
-                        userLocalDate_Nigeria = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZone));                
-                        user.LastSeen = userLocalDate_Nigeria;    
-                    }                
-                }          
-
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();           
-                return user; 
-            } else {
-                throw new AppException("User not found");
-            }  
-        }                   
-
-        public async Task<PaymentNotification> AddPaymentNotification(Log log,PaymentNotification paymentNotification,IFormFile[] images)
+        public async Task<User> AddPaymentNotification(PaymentNotification paymentNotification,IFormFile[] images)
         {
             var user = await _context.Users.Where(x => x.Email == paymentNotification.Email).FirstOrDefaultAsync();
             if (user == null) {
@@ -601,7 +584,7 @@ namespace Backend.Services
                             using (var fileStream = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
                             {
                                 await file.CopyToAsync(fileStream);
-                                paymentNotification.ImageNames = "......" + uniqueFileNameTrimmed;
+                                paymentNotification.ImageNames = uniqueFileNameTrimmed;
 
                                 if (file.ContentType.StartsWith("image")) {
                                     int width = 200;
@@ -629,8 +612,24 @@ namespace Backend.Services
             string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
             userLocalDate_Nigeria = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZone));                       
             paymentNotification.DateAdded = userLocalDate_Nigeria;
+
+            int length = GlobalVariables.RandomStringLengthShort();
+            var randomKey = "";
+            var keyIsAlreadyPresent = true;
+            do
+            {
+                randomKey = GlobalVariables.RandomString(length);
+                keyIsAlreadyPresent = _context.PaymentNotifications.Any(x => x.Reference == randomKey); 
+            } while (keyIsAlreadyPresent);
+            paymentNotification.Reference = randomKey;               
             
+            paymentNotification.Confirmed = "No";
+            paymentNotification.UpdateAllowed = true;
             await _context.PaymentNotifications.AddAsync(paymentNotification);
+
+            user.ContributionLimitRequested = true;
+            _context.Users.Update(user);
+
             await _context.SaveChangesAsync();
 
             //ThreadPool.QueueUserWorkItem(o => {
@@ -647,27 +646,138 @@ namespace Backend.Services
             //});   
 
             //await _logService.Create(log);
+            return user;            
+        }        
+
+        public async Task<PaymentNotification> UpdatePaymentNotification(PaymentNotification paymentNotificationParam,IFormFile[] images)
+        {
+            var paymentNotification = await _context.PaymentNotifications.Where(x => x.Reference == paymentNotificationParam.Reference).FirstOrDefaultAsync();
+            if (paymentNotification == null) {
+                throw new AppException("Payment notification not found");
+            }      
+
+            if (!paymentNotification.UpdateAllowed) {
+                throw new AppException("Invalid payment notification update attempted");
+            }
+
+            if (images != null) {
+                for (int i = 0; i < images.Length; i++) {
+                    if (images[i] != null && images[i].Length > 0) {                        
+                        var file = images[i];
+                        if (file.Length > 0) {
+                            if (!file.ContentType.StartsWith("image")) {
+                                var fileLength = file.Length/1024;
+                                var maxFileLength = 5120;
+                                if (fileLength > maxFileLength) {
+                                    throw new AppException("Uploaded file must not be more than 5MB!");
+                                }
+                            }
+                        }
+                    }
+                }
+            }        
+
+            paymentNotification.AmountPaid = paymentNotificationParam.AmountPaid; 
+            paymentNotification.PaymentChannel = paymentNotificationParam.PaymentChannel; 
+            paymentNotification.PaymentDateAndTime = paymentNotificationParam.PaymentDateAndTime;           
+            paymentNotification.DepositorName = paymentNotificationParam.DepositorName; 
+            paymentNotification.AdditionalDetails = paymentNotificationParam.AdditionalDetails; 
+
+            if (images != null) {
+                for (int i = 0; i < images.Length; i++) {
+                    Bitmap originalFile = null;
+                    Bitmap resizedFile = null;
+                    int imgWidth = 0;
+                    int imgHeigth = 0;               
+                    if ((i == 0) && (images[i] != null) && (images[i].Length > 0))
+                    {    
+                        var uploads = Path.GetFullPath(Path.Combine(GlobalVariables.ImagePath, @"images\payment"));                  
+                        var file = images[i];
+                        if (file.Length > 0)
+                        {
+                            var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim();
+                            string uniqueFileName = paymentNotification.FirstName.Substring(0,5) + i + DateTime.Now + file.FileName;
+                            string uniqueFileNameTrimmed = uniqueFileName.Replace(":", "").Replace("-", "").Replace(" ", "").Replace("/", "");
+
+                            using (var fileStream = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
+                            {
+                                await file.CopyToAsync(fileStream);
+                                paymentNotification.ImageNames = uniqueFileNameTrimmed;
+
+                                if (file.ContentType.StartsWith("image")) {
+                                    int width = 200;
+                                    int height = 200;
+                                    originalFile = new Bitmap(fileStream);
+                                    resizedFile = ResizeImage.GetResizedImage(fileStream,width,height,width,height);
+                                }   
+                            }
+
+                            if (resizedFile != null)
+                            {
+                                imgWidth = resizedFile.Width;
+                                imgHeigth = resizedFile.Height;
+                                using (var fileStreamUp = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
+                                {
+                                    resizedFile.Save(fileStreamUp, ImageFormat.Jpeg);
+                                }
+                            }
+                        }
+                    }                    
+                }                             
+            }   
+
+            DateTime userLocalDate_Nigeria = new DateTime();
+            string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
+            userLocalDate_Nigeria = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZone));                       
+            paymentNotification.DateEdited = userLocalDate_Nigeria;
+
+            _context.PaymentNotifications.Update(paymentNotification);
+            await _context.SaveChangesAsync();
+
+            //ThreadPool.QueueUserWorkItem(o => {
+                string body = "Dear " + paymentNotification.FirstName + ",<br/><br/>Thank you for updating your payment notification.<br/><br/>" +
+                    "We will check your updated payment notification and update your online profile.<br/><br/>" + 
+                    "You will also receive an email from us as soon as we have taken any action on your updated payment notification<br/><br/>" +
+                    "Thanks,<br/>The RotatePay Team<br/>";          
+                var message = new Message(new string[] { paymentNotification.Email }, "[RotatePay] Updated Payment Notification Received", body, null);
+                _emailSenderService.SendEmail(message);     
+
+                string body1 = paymentNotification.FirstName + "(" + paymentNotification.Email + ") has updated their payment notification with reference " + paymentNotification.Reference + ".<br/><br/><br/>";
+                var message1 = new Message(new string[] { GlobalVariables.AdminEmail }, "[RotatePay] Updated Payment Notification by " + paymentNotification.Email, body1, images);
+                _emailSenderService.SendEmail(message1);
+            //});   
+
+            //await _logService.Create(log);
             return paymentNotification;            
         }        
 
-        public async Task<List<PaymentNotification>> GetAllPaymentNotification(Log log,string type)
+
+        public async Task<List<PaymentNotification>> GetPaymentNotificationsByHiDee(string type,string hiDee)
         {
-            if (type == "All") {
-                return await _context.PaymentNotifications.ToListAsync();
+            var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
+            if (user == null) {
+                throw new AppException("User is not found");
+            }              
+
+            if (user.HiDee.Equals(GlobalVariables.BaseKey())) {
+                if (type == "All") {
+                    return await _context.PaymentNotifications.OrderByDescending(x => x.DateAdded).ToListAsync();
+                } else {
+                    return await _context.PaymentNotifications.Where(x => x.Type == type)
+                        .OrderByDescending(x => x.DateAdded).ToListAsync();
+                }                
             } else {
-                return await _context.PaymentNotifications.Where(x => x.Type == type).ToListAsync();
-            }
-        }
-        public async Task<List<PaymentNotification>> GetPaymentNotificationByEmail(Log log,string type,string email)
-        {
-            if (type == "All") {
-                return await _context.PaymentNotifications.Where(x => x.Email == email).ToListAsync();
-            } else {
-                return await _context.PaymentNotifications.Where(x => (x.Email == email) && (x.Type == type)).ToListAsync();
-            }
+                if (type == "All") {
+                    return await _context.PaymentNotifications.Where(x => x.Email == user.Email)
+                        .OrderByDescending(x => x.DateAdded).ToListAsync();
+                } else {
+                    return await _context.PaymentNotifications.Where(x => (x.Email == user.Email) && (x.Type == type))
+                        .OrderByDescending(x => x.DateAdded).ToListAsync();
+                }             
+            }               
         }                 
 
-        public async Task Delete(Log log,int id)
+        public async Task Delete(int id)
         {                  
             var user = await _context.Users.FindAsync(id);
             if (user != null) {

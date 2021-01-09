@@ -56,7 +56,12 @@ namespace Backend.Helpers
         public static int RandomStringLength()
         {
             return 31;
-        }           
+        }  
+        
+        public static int RandomStringLengthShort()
+        {
+            return 15;
+        }                   
 
         public static string RandomString(int length)
         {
@@ -64,5 +69,10 @@ namespace Backend.Helpers
             return new string(Enumerable.Repeat(chars, length)
             .Select(s => s[random.Next(s.Length)]).ToArray());
         }        
+
+        public static string BaseKey()
+        {
+            return "tEAyznj3kucbinvrQcIhxA8WLPiHgHb";
+        }            
     }
 }

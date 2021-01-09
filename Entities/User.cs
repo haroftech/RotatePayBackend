@@ -31,6 +31,8 @@ namespace Backend.Entities
         public string Integration { get; set; }   // Not used for now but do not delete     
         public string SubAccountCode { get; set; }   // Not used for now but do not delete     
         public Boolean ContributionLimitSet { get; set;}
+        public double DesiredContributionAmount { get; set;}      
+        public Boolean OptOutOfContributionLimit { get; set;}   
         public double ContributionLimit { get; set;}        
         public Boolean ContributionLimitRequested { get; set;}         
         public int EmailConfirmationCode { get; set; }

@@ -29,7 +29,9 @@ namespace Backend.Dtos
         //public string BVN { get; set; }   // Can be useful leter so do not delete         
         //public string Integration { get; set; }   // Can be useful leter so do not delete      
         //public string SubAccountCode { get; set; }   // Can be useful leter so do not delete               
-        public Boolean ContributionLimitSet { get; set;}  
+        public Boolean ContributionLimitSet { get; set;}
+        public double DesiredContributionAmount { get; set;}   
+        public Boolean OptOutOfContributionLimit { get; set;}      
         public double ContributionLimit { get; set;}    
         public Boolean ContributionLimitRequested { get; set;}             
         public int EmailConfirmationCode { get; set; }
@@ -45,5 +47,10 @@ namespace Backend.Dtos
         public DateTime DateEdited { get; set; }  
         public string LastSeenDisplay { get; set; }       
         public string DateAddedDisplay { get; set; }        
+
+        public string CurrentPassword { get; set; }      
+        public int ResetCode { get; set; }   
+        public int VerificationCode { get; set; }   
+        public string EmailLoggedIn { get; set; }         
     }
 }

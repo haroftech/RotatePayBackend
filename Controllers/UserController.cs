@@ -39,19 +39,15 @@ namespace Backend.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("reg/{usrreg}")]
-        public async Task<IActionResult> Register(string ow, string dt, [FromForm]UserDtoAdmin UserDtoAdmin)
+        [HttpPost("reg")]
+        public async Task<IActionResult> Register([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
-            {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                  
-                var user = _mapper.Map<User>(UserDtoAdmin);
+            {               
+                var user = _mapper.Map<User>(userDtoAdmin);
                 Random rnd = new Random();
                 user.EmailConfirmationCode = rnd.Next(100000,1000000);                              
-                var addedUser = await _userService.Create(newLog, user, UserDtoAdmin.Password);
+                var addedUser = await _userService.Create(user, userDtoAdmin.Password);
 
                 var tokenString = "";
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -79,18 +75,14 @@ namespace Backend.Controllers
         }   
 
         [AllowAnonymous]
-        [HttpPost("rqc/{usrrqc}")]
-        public async Task<IActionResult> RequestResetPassword(string ow, string dt, string em)
+        [HttpPost("rqc")]
+        public async Task<IActionResult> RequestResetPassword([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
-            {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                  
+            {             
                 Random rnd = new Random(); 
                 var verificationCode = rnd.Next(100000,1000000);
-                var email = await _userService.RequestPasswordReset(newLog,em,verificationCode);  
+                var email = await _userService.RequestPasswordReset(userDtoAdmin.Email,verificationCode);  
                 return Ok(new {
                     Email = email,             
                 });            
@@ -102,17 +94,12 @@ namespace Backend.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("rcu/{usrrcu}")]
-        public async Task<IActionResult> ResetPassword(string ow, string dt, string em, string cpd, string pd, int rc)
+        [HttpPost("rcu")]
+        public async Task<IActionResult> ResetPassword([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
             {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                  
-
-                var user = await _userService.ResetPassword(newLog,em,cpd,pd,rc);  
+                var user = await _userService.ResetPassword(userDtoAdmin.Email,userDtoAdmin.CurrentPassword,userDtoAdmin.Password,userDtoAdmin.ResetCode);  
                 return Ok(new {
                     Email = user.Email
                 });                
@@ -123,16 +110,12 @@ namespace Backend.Controllers
             }            
         }               
 
-        [HttpPost("rqve/{usrrqve}")]
-        public async Task<IActionResult> RequestVerification(string ow, string dt, string em)
+        [HttpPost("rqve")]
+        public async Task<IActionResult> RequestVerification([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
-            {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                  
-                var email = await _userService.RequestVerification(newLog,em);  
+            {               
+                var email = await _userService.RequestVerification(userDtoAdmin.Email);  
                 return Ok(new {
                     Email = email,             
                 });                 
@@ -144,16 +127,12 @@ namespace Backend.Controllers
         }       
         
         [AllowAnonymous]
-        [HttpPost("ver/{usrver}")]
-        public async Task<IActionResult> Verify(string ow, string dt, string em, int vc)
+        [HttpPost("ver")]
+        public async Task<IActionResult> Verify([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
-            {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                  
-                var user = await _userService.Verify(newLog,em,vc);  
+            {                
+                var user = await _userService.Verify(userDtoAdmin.Email,userDtoAdmin.VerificationCode);  
 
                 var tokenString = "";
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -181,16 +160,12 @@ namespace Backend.Controllers
         }                  
 
         [AllowAnonymous]
-        [HttpPost("lgn/{usrlgn}")]
-        public async Task<IActionResult> Authenticate(string ow, string dt, [FromBody]UserDtoAdmin UserDtoAdmin)
+        [HttpPost("lgn")]
+        public async Task<IActionResult> Authenticate([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
-            {                
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                  
-                var user = await _userService.Authenticate(newLog,UserDtoAdmin.Email, UserDtoAdmin.Password);
+            {                              
+                var user = await _userService.Authenticate(userDtoAdmin.Email, userDtoAdmin.Password);
 
                 if (user == null) {
                     return BadRequest("Email or password is incorrect");
@@ -222,31 +197,22 @@ namespace Backend.Controllers
                 
         }
 
-        [HttpGet("gal/{usrgal}")]
-        public async Task<IActionResult> GetAll(string ow, string dt)
+        [HttpGet("gal")]
+        public async Task<IActionResult> GetAllUsersAdmin()
         {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            var users = await _userService.GetAll(newLog);
-            var userDtoAlls = _mapper.Map<IList<UserDtoAll>>(users);
-            return Ok(userDtoAlls);
+             
+            var users = await _userService.GetAllUsersAdmin();
+            var userDtoAdmin = _mapper.Map<IList<UserDtoAdmin>>(users);
+            return Ok(userDtoAdmin);
         }                
 
-        [HttpPut("upd/{usrupd}")]
-        public async Task<IActionResult> Update(string ow, string dt, int id, [FromForm]UserDtoAdmin UserDtoAdmin)
+        [HttpPut("upd")]
+        public async Task<IActionResult> Update([FromForm]UserDtoAdmin userDtoAdmin)
         {
             try 
-            {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };          
-                var user = _mapper.Map<User>(UserDtoAdmin);
-                user.Id = id;                      
-
-                var updatedUser = await _userService.Update(newLog, user, UserDtoAdmin.Images, UserDtoAdmin.Password);
+            {  
+                var user = _mapper.Map<User>(userDtoAdmin);
+                var updatedUser = await _userService.Update(user, userDtoAdmin.Images, userDtoAdmin.Password);
 
                 var tokenString = "";
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -273,80 +239,55 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("gbud/{usrgbud}")]
-        public async Task<IActionResult> GetByUserId(string ow, string dt, int id)
-        {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            var user = await _userService.GetByUserId(newLog,id);
-            var userDtoAll = _mapper.Map<UserDtoAll>(user);
-            return Ok(userDtoAll);
-        }   
-
-        [HttpGet("gbem/{usrgbem}")]
-        public async Task<IActionResult> GetByEmail(string ow, string dt, string em)
-        {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            var user =  await _userService.GetByEmail(newLog,em);
+        [HttpGet("gbem")]
+        public async Task<IActionResult> GetByHiDee([FromForm]UserDtoAdmin userDtoAdmin)
+        {             
+            var user =  await _userService.GetByHiDee(userDtoAdmin.HiDee);
             var userDtoAll = _mapper.Map<UserDtoAll>(user);
             return Ok(userDtoAll);
         }      
 
-        [HttpPut("uui/{usruui}")]
-        public async Task<IActionResult> UpdateUserInfo(string ow, string dt, int id, string uc)
+        [HttpPut("uui")]
+        public async Task<IActionResult> UpdateUserInfo([FromForm]UserDtoAdmin userDtoAdmin)
         {          
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };                           
+                          
             try 
             {
-                var updatedUser = await _userService.UpdateUserInfo(newLog,id,uc);
+                var updatedUser = await _userService.UpdateUserInfo(userDtoAdmin.Id,userDtoAdmin.UserCookie);
                 return Ok();
             } 
             catch(AppException ex)
             {
                 return BadRequest(ex.Message);
             }
-        }          
+        }                        
 
-        [HttpGet("guui/{usrguui}")]
-        public async Task<IActionResult> GetUserUpdatedInfo(string ow, string dt, string em, string emli)
-        {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            var userUpdatedInfo =  await _userService.GetUserUpdatedInfo(newLog,em,emli);
-            var userDtoAll = _mapper.Map<UserDtoAll>(userUpdatedInfo);
-            var userDtoUser = _mapper.Map<UserDtoUser>(userUpdatedInfo);
-            var userDtoAdmin = _mapper.Map<UserDtoAdmin>(userUpdatedInfo);
-            if(emli == "RotatePay") {
-                return Ok(userDtoAdmin);
-            } else if (em == emli) {
-                return Ok(userDtoUser);                       
-            } else {
-                return Ok(userDtoAll);                
-            }
-        }                  
-
-        [HttpPost("adpayn/{usradpayn}")]
-        public async Task<IActionResult> AddPaymentNotification(string ow, string dt, [FromForm]PaymentNotificationDto paymentNotificationDto)
+        [HttpPost("adpayn")]
+        public async Task<IActionResult> AddPaymentNotification([FromForm]PaymentNotificationDto paymentNotificationDto)
         {
             try 
-            {
-                var newLog = new Log {
-                    Owner = ow,
-                    Detail = dt
-                };                          
+            {                       
                 var paymentNotification = _mapper.Map<PaymentNotification>(paymentNotificationDto);                    
-                var addedPaymentNotification = await _userService.AddPaymentNotification(newLog,paymentNotification,paymentNotificationDto.Images);
-                return Ok(addedPaymentNotification);               
+                var userAddedPaymentNotification = await _userService.AddPaymentNotification(paymentNotification,paymentNotificationDto.Images);
+
+                var tokenString = "";
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(new Claim[] 
+                    {
+                        new Claim(ClaimTypes.Name, userAddedPaymentNotification.Id.ToString())
+                    }),
+                    Expires = DateTime.UtcNow.AddDays(365),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                tokenString = tokenHandler.WriteToken(token);    
+
+                var userDtoUser = _mapper.Map<UserDtoUser>(userAddedPaymentNotification);
+                userDtoUser.Token = tokenString;
+                return Ok(userDtoUser);          
             } 
             catch(AppException ex)
             {
@@ -354,36 +295,32 @@ namespace Backend.Controllers
             }
         }   
 
-        [HttpGet("galpayn/{usrgalpayn}")]
-        public async Task<IActionResult> GetAllPaymentNotification(string ow, string dt, string tpe)
+        [HttpPost("updpayn")]
+        public async Task<IActionResult> UpdatePaymentNotification([FromForm]PaymentNotificationDto paymentNotificationDto)
         {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            var allPaymentNotification = await _userService.GetAllPaymentNotification(newLog,tpe);
-            return Ok(allPaymentNotification);
-        }      
+            try 
+            {                       
+                var paymentNotification = _mapper.Map<PaymentNotification>(paymentNotificationDto);                    
+                var updatedPaymentNotification = await _userService.UpdatePaymentNotification(paymentNotification,paymentNotificationDto.Images);
+                return Ok(updatedPaymentNotification);          
+            } 
+            catch(AppException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }   
 
-        [HttpGet("paynbem/{usrpaynbem}")]
-        public async Task<IActionResult> GetPaymentNotificationByEmail(string ow, string dt, string tpe, string em)
-        {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            var paymentNotificationByUserId = await _userService.GetPaymentNotificationByEmail(newLog,tpe,em);
+        [HttpPost("paynbhd")]
+        public async Task<IActionResult> GetPaymentNotificationsByHiDee([FromForm]PaymentNotificationDto paymentNotificationDto)
+        {             
+            var paymentNotificationByUserId = await _userService.GetPaymentNotificationsByHiDee(paymentNotificationDto.Type,paymentNotificationDto.UserHiDee);
             return Ok(paymentNotificationByUserId);
         }     
 
-        [HttpDelete("del/{usrdel}")]
-        public async Task<IActionResult> Delete(string ow, string dt, int id)
-        {
-            var newLog = new Log {
-                Owner = ow,
-                Detail = dt
-            };              
-            await _userService.Delete(newLog,id);
+        [HttpDelete("del")]
+        public async Task<IActionResult> Delete([FromForm]UserDtoAdmin userDtoAdmin)
+        {             
+            await _userService.Delete(userDtoAdmin.Id);
             return Ok();
         }               
     }

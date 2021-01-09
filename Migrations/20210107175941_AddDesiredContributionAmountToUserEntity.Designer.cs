@@ -4,14 +4,16 @@ using Backend.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20210107175941_AddDesiredContributionAmountToUserEntity")]
+    partial class AddDesiredContributionAmountToUserEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,9 +38,6 @@ namespace Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("DateAdded")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateEdited")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("DepositorName")
@@ -94,9 +93,6 @@ namespace Backend.Migrations
 
                     b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("UpdateAllowed")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -208,9 +204,6 @@ namespace Backend.Migrations
 
                     b.Property<string>("MyProperty9")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("OptOutOfContributionLimit")
-                        .HasColumnType("bit");
 
                     b.Property<byte[]>("PasswordHash")
                         .HasColumnType("varbinary(max)");
