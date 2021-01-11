@@ -23,13 +23,18 @@ namespace Backend.Dtos
         public string BankCode { get; set; }      
         public string ImageNames { get; set; }   
         public string Role { get; set; }     
-        public DateTime DateOfBirth { get; set; }   // Do not delete           
-        //public string BVN { get; set; }   // Do not delete            
-        public Boolean ContributionLimitSet { get; set;} 
-        public double DesiredContributionAmount { get; set;}    
-        public Boolean OptOutOfContributionLimit { get; set;}     
-        public double ContributionLimit { get; set;}        
-        public Boolean ContributionLimitRequested { get; set;}             
+        public DateTime DateOfBirth { get; set; }         
+        public double ContributionAmount { get; set;}   
+        public double ContributionAmountLocked { get; set;}   
+        public Boolean CanGuaranteeRequested { get; set; }
+        public Boolean GuaranteeLocked { get; set; }
+        public Boolean CanGuarantee { get; set; }
+        //public string BVN { get; set; } // Do not delete     
+        //public double DesiredContributionAmount { get; set;} // Do not delete                 
+        //public Boolean ContributionLimitSet { get; set;} // Do not delete  
+        //public Boolean OptOutOfContributionLimit { get; set;} // Do not delete  
+        //public double ContributionLimit { get; set;} // Do not delete  
+        //public Boolean ContributionLimitRequested { get; set;} // Do not delete  
         public Boolean EmailConfirmed { get; set; }
         public string Token { get; set; }      
         public string LastSeenDisplay { get; set; }       

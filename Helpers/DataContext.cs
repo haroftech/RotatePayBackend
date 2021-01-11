@@ -10,5 +10,7 @@ namespace Backend.Helpers
         public DbSet<User> Users { get; set; }
         public DbSet<UserUpload> UserUploads { get; set; }
         public DbSet<PaymentNotification> PaymentNotifications { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<Guarantor> Guarantors { get; set; }        
     }
 }

@@ -198,10 +198,10 @@ namespace Backend.Controllers
         }
 
         [HttpGet("gal")]
-        public async Task<IActionResult> GetAllUsersAdmin()
+        public async Task<IActionResult> GetAll()
         {
              
-            var users = await _userService.GetAllUsersAdmin();
+            var users = await _userService.GetAll();
             var userDtoAdmin = _mapper.Map<IList<UserDtoAdmin>>(users);
             return Ok(userDtoAdmin);
         }                
@@ -239,12 +239,12 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("gbem")]
+        [HttpPost("gbhde")]
         public async Task<IActionResult> GetByHiDee([FromForm]UserDtoAdmin userDtoAdmin)
         {             
             var user =  await _userService.GetByHiDee(userDtoAdmin.HiDee);
-            var userDtoAll = _mapper.Map<UserDtoAll>(user);
-            return Ok(userDtoAll);
+            var userDtoAdminn = _mapper.Map<UserDtoAdmin>(user);
+            return Ok(userDtoAdminn);
         }      
 
         [HttpPut("uui")]
@@ -310,12 +310,19 @@ namespace Backend.Controllers
             }
         }   
 
-        [HttpPost("paynbhd")]
+        [HttpPost("paynbhde")]
         public async Task<IActionResult> GetPaymentNotificationsByHiDee([FromForm]PaymentNotificationDto paymentNotificationDto)
         {             
-            var paymentNotificationByUserId = await _userService.GetPaymentNotificationsByHiDee(paymentNotificationDto.Type,paymentNotificationDto.UserHiDee);
-            return Ok(paymentNotificationByUserId);
-        }     
+            var paymentNotificationByHiDee = await _userService.GetPaymentNotificationsByHiDee(paymentNotificationDto.Type,paymentNotificationDto.UserHiDee);
+            return Ok(paymentNotificationByHiDee);
+        }    
+
+        [HttpPost("trnsbhde")]
+        public async Task<IActionResult> GetTransactionsByHiDee([FromForm]TransactionDto transactionDto)
+        {             
+            var transactionByHiDee = await _userService.GetTransactionsByHiDee(transactionDto.Type,transactionDto.UserHiDee);
+            return Ok(transactionByHiDee);
+        }             
 
         [HttpDelete("del")]
         public async Task<IActionResult> Delete([FromForm]UserDtoAdmin userDtoAdmin)

@@ -4,74 +4,22 @@ using Backend.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20210109232746_AddTransactionEntity")]
+    partial class AddTransactionEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .UseIdentityColumns()
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("ProductVersion", "5.0.1");
-
-            modelBuilder.Entity("Backend.Entities.Guarantor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .UseIdentityColumn();
-
-                    b.Property<DateTime>("DateAdded")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("GuaranteeEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GuarantorEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty0")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty1")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty2")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty3")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty4")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty5")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty6")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty7")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty8")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MyProperty9")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Guarantors");
-                });
 
             modelBuilder.Entity("Backend.Entities.PaymentNotification", b =>
                 {
@@ -239,18 +187,6 @@ namespace Backend.Migrations
                     b.Property<string>("BankName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("CanGuarantee")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("CanGuaranteeRequested")
-                        .HasColumnType("bit");
-
-                    b.Property<double>("ContributionAmount")
-                        .HasColumnType("float");
-
-                    b.Property<double>("ContributionAmountLocked")
-                        .HasColumnType("float");
-
                     b.Property<double>("ContributionLimit")
                         .HasColumnType("float");
 
@@ -289,9 +225,6 @@ namespace Backend.Migrations
 
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("GuaranteeLocked")
-                        .HasColumnType("bit");
 
                     b.Property<string>("HiDee")
                         .HasColumnType("nvarchar(max)");

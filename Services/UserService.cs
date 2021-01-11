@@ -38,13 +38,14 @@ namespace Backend.Services
         Task<String> RequestVerification(string email);      
         Task<User> Verify(string email,int verificationCode);
         Task<User> Authenticate(string email, string password);
-        Task<IList<User>> GetAllUsersAdmin();
+        Task<IList<User>> GetAll();
         Task<User> Update(User user, IFormFile[] images, string password = null);      
         Task<User> GetByHiDee(string hiDee);
         Task<User> UpdateUserInfo( int id, string userCookie);
         Task<User> AddPaymentNotification(PaymentNotification paymentNotification,IFormFile[] images);
         Task<PaymentNotification> UpdatePaymentNotification(PaymentNotification paymentNotification,IFormFile[] images);
         Task<List<PaymentNotification>> GetPaymentNotificationsByHiDee(string type,string hiDee);
+        Task<List<Transaction>> GetTransactionsByHiDee(string type,string hiDee);
         Task Delete(int id);
     }
 
@@ -86,8 +87,8 @@ namespace Backend.Services
                 throw new AppException("First name is too long");
             }     
 
-            if (user.Surname.ToUpper().Contains("ROTATE") || user.FirstName.ToUpper().Contains("ROTATE") 
-                || user.Surname.ToUpper().Contains("PAY") || user.FirstName.ToUpper().Contains("PAY")) {
+            if (user.Email.ToUpper().Contains("ROTATE") || user.FirstName.ToUpper().Contains("ROTATE") 
+                || user.Email.ToUpper().Contains("PAY") || user.FirstName.ToUpper().Contains("PAY")) {
                 throw new AppException("Surname or Firstname is not available");
             }                                         
 
@@ -97,7 +98,7 @@ namespace Backend.Services
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;            
             user.Role = "User";
-            user.ImageNames = "......profilePictureRTPay......bankStatementRTPay......officialIDCardRTPay"; //......workIDCardRTPay......utilityBillRTPay";
+            user.ImageNames = "......profilePictureRTPay......officialIDCardRTPay......utilityBillRTPay"; //......bankStatementRTPay......workIDCardRTPay";
 
             DateTime userLocalDate_Nigeria = new DateTime();
             string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
@@ -116,9 +117,6 @@ namespace Backend.Services
             } while (keyIsAlreadyPresent);
             user.HiDee = randomKey;   
 
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-
             //ThreadPool.QueueUserWorkItem(o => {
                 var url = GlobalVariables.URL + "/vaccount?em=" + user.Email + "&vc=" + user.EmailConfirmationCode;
                 var link = $"<a href='{url}'>Click here</a>";
@@ -130,6 +128,8 @@ namespace Backend.Services
                 _emailSenderService.SendEmail(message);     
             //});  
 
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
             //await _logService.Create(log);
             return user;
         }
@@ -274,7 +274,7 @@ namespace Backend.Services
             return user;
         }
 
-        public async Task<IList<User>> GetAllUsersAdmin()
+        public async Task<IList<User>> GetAll()
         {
             return await _context.Users.OrderByDescending(x => x.DateAdded).ToListAsync();
         }
@@ -289,10 +289,10 @@ namespace Backend.Services
                 throw new AppException("First name is too long");
             }              
 
-            /*if (userParam.Surname.ToUpper().Contains("ROTATE") || userParam.FirstName.ToUpper().Contains("ROTATE") 
+            if (userParam.Surname.ToUpper().Contains("ROTATE") || userParam.FirstName.ToUpper().Contains("ROTATE") 
                 || userParam.Surname.ToUpper().Contains("PAY") || userParam.FirstName.ToUpper().Contains("PAY")) {
                 throw new AppException("Surname or Firstname is not available");
-            } */      
+            }      
 
             var user = await _context.Users.FindAsync(userParam.Id);
             if (user == null) {
@@ -327,10 +327,12 @@ namespace Backend.Services
             user.WorkStatus = userParam.WorkStatus;  
             user.PlaceOfWorkName = userParam.PlaceOfWorkName;
             user.PlaceOfWorkAddress = userParam.PlaceOfWorkAddress;    
-            user.DateOfBirth = userParam.DateOfBirth;  
+            user.DateOfBirth = userParam.DateOfBirth;
+            user.ContributionAmount = userParam.ContributionAmount;
+            user.CanGuaranteeRequested = userParam.CanGuaranteeRequested;
             //user.BVN = userParam.BVN;          
-            user.DesiredContributionAmount = userParam.DesiredContributionAmount;
-            user.OptOutOfContributionLimit = userParam.OptOutOfContributionLimit;
+            //user.DesiredContributionAmount = userParam.DesiredContributionAmount;
+            //user.OptOutOfContributionLimit = userParam.OptOutOfContributionLimit;
             user.BankName = userParam.BankName;
             user.AccountNumber = userParam.AccountNumber;
             if (!String.IsNullOrEmpty(userParam.BankCode)) {
@@ -344,10 +346,10 @@ namespace Backend.Services
             }             
 
             string profilePictureFileName = "";
-            string bankStatementFileName = "";
-            string officialIDCardFileName = "";            
-            /*string workIDCardFileName = "";
-            string utilityBillFileName = "";*/
+            string officialIDCardFileName = "";
+            string utilityBillFileName = "";
+            /*string bankStatementFileName = "";
+            string workIDCardFileName = "";*/
             string[] userImageNames = new string[images.Length];
             if (images != null) {
                 for (int i = 0; i < images.Length; i++) {
@@ -374,14 +376,6 @@ namespace Backend.Services
                                     userImageNames[i] = uniqueFileNameTrimmed;
                                 }                                
                             } else if (i == 1) {
-                                if (file.FileName == "bankStatementRTPay") {
-                                    bankStatementFileName = file.FileName;
-                                    userImageNames[i] = file.FileName;
-                                } else {
-                                    bankStatementFileName = uniqueFileNameTrimmed;
-                                    userImageNames[i] = uniqueFileNameTrimmed;
-                                }    
-                            } else if (i == 2) {
                                 if (file.FileName == "officialIDCardRTPay") {
                                     officialIDCardFileName = file.FileName;
                                     userImageNames[i] = file.FileName;
@@ -389,15 +383,7 @@ namespace Backend.Services
                                     officialIDCardFileName = uniqueFileNameTrimmed;
                                     userImageNames[i] = uniqueFileNameTrimmed;
                                 }                                                                
-                            } /*else if (i == 3) {
-                                if (file.FileName == "workIDCardRTPay") {
-                                    workIDCardFileName = file.FileName;
-                                    userImageNames[i] = file.FileName;
-                                } else {
-                                    workIDCardFileName = uniqueFileNameTrimmed;
-                                    userImageNames[i] = uniqueFileNameTrimmed;
-                                }                                                                    
-                            } else if (i == 4) {
+                            } else if (i == 2) {
                                 if (file.FileName == "utilityBillRTPay") {
                                     utilityBillFileName = file.FileName;
                                     userImageNames[i] = file.FileName;
@@ -405,7 +391,23 @@ namespace Backend.Services
                                     utilityBillFileName = uniqueFileNameTrimmed;
                                     userImageNames[i] = uniqueFileNameTrimmed;
                                 }                                  
-                            }   */                        
+                            } /*else if (i == 3) {
+                                if (file.FileName == "bankStatementRTPay") {
+                                    bankStatementFileName = file.FileName;
+                                    userImageNames[i] = file.FileName;
+                                } else {
+                                    bankStatementFileName = uniqueFileNameTrimmed;
+                                    userImageNames[i] = uniqueFileNameTrimmed;
+                                }    
+                            } else if (i == 4) {
+                                if (file.FileName == "workIDCardRTPay") {
+                                    workIDCardFileName = file.FileName;
+                                    userImageNames[i] = file.FileName;
+                                } else {
+                                    workIDCardFileName = uniqueFileNameTrimmed;
+                                    userImageNames[i] = uniqueFileNameTrimmed;
+                                }                                                                    
+                            }    */                        
 
                             using (var fileStream = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
                             {
@@ -434,18 +436,18 @@ namespace Backend.Services
                             profilePictureFileName = userImageNamesDB[i];
                             userImageNames[i] = userImageNamesDB[i];                            
                         } else if (i == 1) {
-                            bankStatementFileName = userImageNamesDB[i];
-                            userImageNames[i] = userImageNamesDB[i];                                                                  
-                        } else if (i == 2) {
                             officialIDCardFileName = userImageNamesDB[i];
                             userImageNames[i] = userImageNamesDB[i];                                                                                               
-                        } /*else if (i == 3) {
-                            workIDCardFileName = userImageNamesDB[i];
-                            userImageNames[i] = userImageNamesDB[i];   
-                        } else if (i == 4) {
+                        } else if (i == 2) {
                             utilityBillFileName = userImageNamesDB[i];
                             userImageNames[i] = userImageNamesDB[i];                                                                 
-                        }       */                   
+                        } /*else if (i == 3) {
+                            bankStatementFileName = userImageNamesDB[i];
+                            userImageNames[i] = userImageNamesDB[i];                                                                  
+                        } else if (i == 4) {
+                            workIDCardFileName = userImageNamesDB[i];
+                            userImageNames[i] = userImageNamesDB[i];   
+                        } */                   
                     }                 
                 }                             
             }                
@@ -453,10 +455,10 @@ namespace Backend.Services
             var userUpload = new UserUpload {
                 UserId = user.Id,
                 ProfilePicture = profilePictureFileName,
-                BankStatement = bankStatementFileName,
-                OfficialIDCard = officialIDCardFileName,                
-                /*WorkIDCard = workIDCardFileName,
-                UtilityBill = utilityBillFileName,*/
+                OfficialIDCard = officialIDCardFileName,
+                UtilityBill = utilityBillFileName,
+                /*BankStatement = bankStatementFileName,                
+                WorkIDCard = workIDCardFileName,*/
             };
 
             user.ImageNames = "";
@@ -775,7 +777,32 @@ namespace Backend.Services
                         .OrderByDescending(x => x.DateAdded).ToListAsync();
                 }             
             }               
-        }                 
+        }    
+
+        public async Task<List<Transaction>> GetTransactionsByHiDee(string type,string hiDee)
+        {
+            var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
+            if (user == null) {
+                throw new AppException("User is not found");
+            }              
+
+            if (user.HiDee.Equals(GlobalVariables.BaseKey())) {
+                if (type == "All") {
+                    return await _context.Transactions.OrderByDescending(x => x.DateAdded).ToListAsync();
+                } else {
+                    return await _context.Transactions.Where(x => x.Type == type)
+                        .OrderByDescending(x => x.DateAdded).ToListAsync();
+                }                
+            } else {
+                if (type == "All") {
+                    return await _context.Transactions.Where(x => x.Email == user.Email)
+                        .OrderByDescending(x => x.DateAdded).ToListAsync();
+                } else {
+                    return await _context.Transactions.Where(x => (x.Email == user.Email) && (x.Type == type))
+                        .OrderByDescending(x => x.DateAdded).ToListAsync();
+                }             
+            }               
+        }                         
 
         public async Task Delete(int id)
         {                  

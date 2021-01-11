@@ -5,8 +5,9 @@ namespace Backend.Dtos
 {
     public class PaymentNotificationDto
     {
-        public int Id { get; set; }    
-        public string UserHiDee { get; set; }        
+        public string UserHiDee { get; set; }     
+                
+        public int Id { get; set; }       
         public string Reference { get; set; } 
         public string Type { get; set; }    
         public string Email { get; set; }

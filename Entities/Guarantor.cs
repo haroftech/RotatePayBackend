@@ -1,26 +1,23 @@
 using System;
 using Backend.Helpers;
+using System.Collections.Generic;
 
 namespace Backend.Entities
 {
-    public class UserUpload
+    public class Guarantor
     {
-        public int Id { get; set; }       
-        public int UserId { get; set; }   
-        public string ProfilePicture { get; set; }  
-        public string OfficialIDCard { get; set; } 
-        public string UtilityBill { get; set; }          
-        public string BankStatement { get; set; }  // Not used for now but do not delete     
-        public string WorkIDCard { get; set; }        // Not used for now but do not delete  
-        public string ImageNames { get; set; }  
-        public DateTime DateAdded { get; set; } 
+        public int Id { get; set; }
+        public string Status { get; set; }
+        public string GuarantorEmail { get; set; }
+        public string GuaranteeEmail { get; set; }
+        public DateTime DateAdded { get; set; }
         public string DateAddedDisplay 
         {
             get
             {
                 return RelativeTime.getRelativeTime(DateAdded);
             }            
-        }                       
+        }     
         public string MyProperty0 { get; set; }
         public string MyProperty1 { get; set; }
         public string MyProperty2 { get; set; }
@@ -31,7 +28,5 @@ namespace Backend.Entities
         public string MyProperty7 { get; set; }
         public string MyProperty8 { get; set; }
         public string MyProperty9 { get; set; }
-
-        public User User { get; set; }
     }
 }

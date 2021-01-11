@@ -31,8 +31,8 @@ namespace Backend.Helpers
         {
             get
             {
-                //return "email@rotatepay.com";
-                return "info@haroftech.com";
+                return "email@rotatepay.com";
+                //return "info@haroftech.com";
             }
         }  
 
@@ -40,8 +40,9 @@ namespace Backend.Helpers
         {
             get
             {
+                return "email@rotatepay.com";
                 //return "document@rotatepay.com";
-                return "info@haroftech.com";
+                //return "info@haroftech.com";
             }
         }  
 

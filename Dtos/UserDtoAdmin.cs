@@ -25,15 +25,20 @@ namespace Backend.Dtos
         public IFormFile[] Images { get; set; }    
         public string ImageNames { get; set; }
         public string Role { get; set; }   
-        public DateTime DateOfBirth { get; set; }   // Can be useful leter so do not delete      
-        //public string BVN { get; set; }   // Can be useful leter so do not delete         
-        //public string Integration { get; set; }   // Can be useful leter so do not delete      
-        //public string SubAccountCode { get; set; }   // Can be useful leter so do not delete               
-        public Boolean ContributionLimitSet { get; set;}
-        public double DesiredContributionAmount { get; set;}   
-        public Boolean OptOutOfContributionLimit { get; set;}      
-        public double ContributionLimit { get; set;}    
-        public Boolean ContributionLimitRequested { get; set;}             
+        public DateTime DateOfBirth { get; set; }
+        public double ContributionAmount { get; set;} 
+        public double ContributionAmountLocked { get; set;}               
+        public Boolean CanGuaranteeRequested { get; set; }
+        public Boolean GuaranteeLocked { get; set; }
+        public Boolean CanGuarantee { get; set; }        
+        //public string BVN { get; set; } // Can be useful leter so do not delete         
+        //public string Integration { get; set; } // Can be useful leter so do not delete      
+        //public string SubAccountCode { get; set; } // Can be useful leter so do not delete           
+        //public double DesiredContributionAmount { get; set;} // Can be useful leter so do not delete          
+        //public Boolean ContributionLimitSet { get; set;} // Can be useful leter so do not delete    
+        //public Boolean OptOutOfContributionLimit { get; set;} // Can be useful leter so do not delete    
+        //public double ContributionLimit { get; set;} // Can be useful leter so do not delete        
+        //public Boolean ContributionLimitRequested { get; set;} // Can be useful leter so do not delete  
         public int EmailConfirmationCode { get; set; }
         public Boolean EmailConfirmed { get; set; }
         public int EmailConfirmationAttempts { get; set; } 

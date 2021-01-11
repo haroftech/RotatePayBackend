@@ -35,7 +35,7 @@ namespace Backend.Emails
         private MimeMessage CreateEmailMessage(Message message)
         {
             var emailMessage = new MimeMessage();
-            emailMessage.From.Add(new MailboxAddress(_emailConfig.UserName,_emailConfig.From));
+            emailMessage.From.Add(new MailboxAddress(_emailConfig.FromName,_emailConfig.FromEmail));
             emailMessage.To.AddRange(message.To);
             emailMessage.Subject = message.Subject;
 
