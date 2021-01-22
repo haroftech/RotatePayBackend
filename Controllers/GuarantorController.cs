@@ -1,4 +1,4 @@
-﻿/*using System.IO;
+﻿using System.IO;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Backend.Services;
@@ -52,15 +52,23 @@ namespace Backend.Controllers
             }
         }  
 
-        [HttpGet("gal")]
-        public async Task<IActionResult> GetAll()
+        [HttpPost("ggorbhde")]
+        public async Task<IActionResult> GetGuarantorByHiDee([FromForm]GuarantorDto guarantorDto)
         {             
-            var guarantors = await _guarantorService.GetAll();
+            var guarantors = await _guarantorService.GetGuarantorByHiDee(guarantorDto);
             var guarantorDtos = _mapper.Map<IList<GuarantorDto>>(guarantors);
             return Ok(guarantorDtos);
-        }  
+        }     
 
-        [HttpPut("upd")]
+        [HttpPost("ggeebhde")]
+        public async Task<IActionResult> GetGuaranteeByHiDee([FromForm]GuarantorDto guarantorDto)
+        {             
+            var guarantors = await _guarantorService.GetGuaranteeByHiDee(guarantorDto);
+            var guarantorDtos = _mapper.Map<IList<GuarantorDto>>(guarantors);
+            return Ok(guarantorDtos);
+        }                  
+
+        /*[HttpPut("upd")]
         public async Task<IActionResult> Update([FromForm]GuarantorDto guarantorDto)
         {
             try 
@@ -73,7 +81,7 @@ namespace Backend.Controllers
             {
                 return BadRequest(ex.Message);
             }
-        }     
+        }    */ 
 
         [HttpDelete("del")]
         public async Task<IActionResult> Delete([FromForm]GuarantorDto guarantorDto)
@@ -82,4 +90,4 @@ namespace Backend.Controllers
             return Ok();
         }               
     }
-}*/
+}

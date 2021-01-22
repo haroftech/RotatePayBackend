@@ -41,8 +41,14 @@ namespace Backend.Controllers
         [HttpPost("gbhde")]
         public async Task<IActionResult> GetByHiDee([FromForm]TransactionDto transactionDto)
         {             
-            var transactionByHiDee = await _transactionService.GetByHiDee(transactionDto.Type,transactionDto.UserHiDee);
-            return Ok(transactionByHiDee);
+            var transactionByHiDee = await _transactionService.GetByHiDee(transactionDto.TransactionType,transactionDto.UserHiDee);
+            if (transactionDto.UserHiDee.Equals(GlobalVariables.BaseKey())) {
+                var transactionDtoAdmin = _mapper.Map<IList<TransactionDto>>(transactionByHiDee);
+                return Ok(transactionDtoAdmin);
+            } else {
+                var transactionDtoUser = _mapper.Map<IList<TransactionDtoUser>>(transactionByHiDee);
+                return Ok(transactionDtoUser);
+            }
         }                         
     }
 }

@@ -38,14 +38,10 @@ namespace Backend.Services
         Task<String> RequestVerification(string email);      
         Task<User> Verify(string email,int verificationCode);
         Task<User> Authenticate(string email, string password);
-        Task<IList<User>> GetAll();
         Task<User> Update(User user, IFormFile[] images, string password = null);      
-        Task<User> GetByHiDee(string hiDee);
+        Task<IList<User>> GetByHiDee(string hiDee);
+        Task<IList<User>> CanGuarantee(string hiDee,string userHiDee);
         Task<User> UpdateUserInfo( int id, string userCookie);
-        Task<User> AddPaymentNotification(PaymentNotification paymentNotification,IFormFile[] images);
-        Task<PaymentNotification> UpdatePaymentNotification(PaymentNotification paymentNotification,IFormFile[] images);
-        Task<List<PaymentNotification>> GetPaymentNotificationsByHiDee(string type,string hiDee);
-        Task<List<Transaction>> GetTransactionsByHiDee(string type,string hiDee);
         Task Delete(int id);
     }
 
@@ -274,11 +270,6 @@ namespace Backend.Services
             return user;
         }
 
-        public async Task<IList<User>> GetAll()
-        {
-            return await _context.Users.OrderByDescending(x => x.DateAdded).ToListAsync();
-        }
-
         public async Task<User> Update(User userParam, IFormFile[] images, string password = null)
         {
             if (userParam.FirstName.Length < 5) {
@@ -492,10 +483,29 @@ namespace Backend.Services
             return user;
         }
 
-        public async Task<User> GetByHiDee(string hiDee)
+        public async Task<IList<User>> GetByHiDee(string hiDee)
         {
-            return await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
-        }        
+            var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
+            if (user.HiDee.Equals(GlobalVariables.BaseKey())) {
+                return await _context.Users.OrderByDescending(x => x.DateAdded).ToListAsync();            
+            } else {
+                return await _context.Users.Where(x => x.HiDee == hiDee)
+                    .OrderByDescending(x => x.DateAdded).ToListAsync();           
+            }            
+        } 
+
+        public async Task<IList<User>> CanGuarantee(string hiDee,string userHiDee)
+        {
+            var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
+            if (user == null || (!userHiDee.Equals(GlobalVariables.BaseKey()))) {
+                throw new AppException("User is not found");
+            }             
+            user.CanGuarantee = !user.CanGuarantee;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            
+            return await _context.Users.OrderByDescending(x => x.DateAdded).ToListAsync();
+        }                
 
         public async Task<User> UpdateUserInfo(int id,string userCookie)
         {
@@ -543,271 +553,10 @@ namespace Backend.Services
             return user;
         }             
 
-        public async Task<User> AddPaymentNotification(PaymentNotification paymentNotification,IFormFile[] images)
-        {
-            var user = await _context.Users.Where(x => x.Email == paymentNotification.Email).FirstOrDefaultAsync();
-            if (user == null) {
-                throw new AppException("User is not found");
-            }      
-
-            if (images != null) {
-                for (int i = 0; i < images.Length; i++) {
-                    if (images[i] != null && images[i].Length > 0) {                        
-                        var file = images[i];
-                        if (file.Length > 0) {
-                            if (!file.ContentType.StartsWith("image")) {
-                                var fileLength = file.Length/1024;
-                                var maxFileLength = 5120;
-                                if (fileLength > maxFileLength) {
-                                    throw new AppException("Uploaded file must not be more than 5MB!");
-                                }
-                            }
-                        }
-                    }
-                }
-            }                   
-
-            if (images != null) {
-                for (int i = 0; i < images.Length; i++) {
-                    Bitmap originalFile = null;
-                    Bitmap resizedFile = null;
-                    int imgWidth = 0;
-                    int imgHeigth = 0;               
-                    if ((i == 0) && (images[i] != null) && (images[i].Length > 0))
-                    {    
-                        var uploads = Path.GetFullPath(Path.Combine(GlobalVariables.ImagePath, @"images\payment"));                  
-                        var file = images[i];
-                        if (file.Length > 0)
-                        {
-                            var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim();
-                            string uniqueFileName = paymentNotification.FirstName.Substring(0,5) + i + DateTime.Now + file.FileName;
-                            string uniqueFileNameTrimmed = uniqueFileName.Replace(":", "").Replace("-", "").Replace(" ", "").Replace("/", "");
-
-                            using (var fileStream = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
-                            {
-                                await file.CopyToAsync(fileStream);
-                                paymentNotification.ImageNames = uniqueFileNameTrimmed;
-
-                                if (file.ContentType.StartsWith("image")) {
-                                    int width = 200;
-                                    int height = 200;
-                                    originalFile = new Bitmap(fileStream);
-                                    resizedFile = ResizeImage.GetResizedImage(fileStream,width,height,width,height);
-                                }   
-                            }
-
-                            if (resizedFile != null)
-                            {
-                                imgWidth = resizedFile.Width;
-                                imgHeigth = resizedFile.Height;
-                                using (var fileStreamUp = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
-                                {
-                                    resizedFile.Save(fileStreamUp, ImageFormat.Jpeg);
-                                }
-                            }
-                        }
-                    }                    
-                }                             
-            }   
-
-            DateTime userLocalDate_Nigeria = new DateTime();
-            string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
-            userLocalDate_Nigeria = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZone));                       
-            paymentNotification.DateAdded = userLocalDate_Nigeria;
-
-            int length = GlobalVariables.RandomStringLengthShort();
-            var randomKey = "";
-            var keyIsAlreadyPresent = true;
-            do
-            {
-                randomKey = GlobalVariables.RandomString(length);
-                keyIsAlreadyPresent = _context.PaymentNotifications.Any(x => x.Reference == randomKey); 
-            } while (keyIsAlreadyPresent);
-            paymentNotification.Reference = randomKey;               
-            
-            paymentNotification.Confirmed = "No";
-            paymentNotification.UpdateAllowed = true;
-            await _context.PaymentNotifications.AddAsync(paymentNotification);
-
-            user.ContributionLimitRequested = true;
-            _context.Users.Update(user);
-
-            await _context.SaveChangesAsync();
-
-            //ThreadPool.QueueUserWorkItem(o => {
-                string body = "Dear " + paymentNotification.FirstName + ",<br/><br/>Thank you for submitting your payment notification.<br/><br/>" +
-                    "We will confirm your payment and update your online profile.<br/><br/>" + 
-                    "You will also receive an email from us as soon as we have confirmed your payment<br/><br/>" +
-                    "Thanks,<br/>The RotatePay Team<br/>";          
-                var message = new Message(new string[] { paymentNotification.Email }, "[RotatePay] Payment Notification Received", body, null);
-                _emailSenderService.SendEmail(message);     
-
-                string body1 = paymentNotification.FirstName + "(" + paymentNotification.Email + ") has submitted the payment notification form.<br/><br/><br/>";
-                var message1 = new Message(new string[] { GlobalVariables.AdminEmail }, "[RotatePay] Payment document by " + paymentNotification.Email, body1, images);
-                _emailSenderService.SendEmail(message1);
-            //});   
-
-            //await _logService.Create(log);
-            return user;            
-        }        
-
-        public async Task<PaymentNotification> UpdatePaymentNotification(PaymentNotification paymentNotificationParam,IFormFile[] images)
-        {
-            var paymentNotification = await _context.PaymentNotifications.Where(x => x.Reference == paymentNotificationParam.Reference).FirstOrDefaultAsync();
-            if (paymentNotification == null) {
-                throw new AppException("Payment notification not found");
-            }      
-
-            if (!paymentNotification.UpdateAllowed) {
-                throw new AppException("Invalid payment notification update attempted");
-            }
-
-            if (images != null) {
-                for (int i = 0; i < images.Length; i++) {
-                    if (images[i] != null && images[i].Length > 0) {                        
-                        var file = images[i];
-                        if (file.Length > 0) {
-                            if (!file.ContentType.StartsWith("image")) {
-                                var fileLength = file.Length/1024;
-                                var maxFileLength = 5120;
-                                if (fileLength > maxFileLength) {
-                                    throw new AppException("Uploaded file must not be more than 5MB!");
-                                }
-                            }
-                        }
-                    }
-                }
-            }        
-
-            paymentNotification.AmountPaid = paymentNotificationParam.AmountPaid; 
-            paymentNotification.PaymentChannel = paymentNotificationParam.PaymentChannel; 
-            paymentNotification.PaymentDateAndTime = paymentNotificationParam.PaymentDateAndTime;           
-            paymentNotification.DepositorName = paymentNotificationParam.DepositorName; 
-            paymentNotification.AdditionalDetails = paymentNotificationParam.AdditionalDetails; 
-
-            if (images != null) {
-                for (int i = 0; i < images.Length; i++) {
-                    Bitmap originalFile = null;
-                    Bitmap resizedFile = null;
-                    int imgWidth = 0;
-                    int imgHeigth = 0;               
-                    if ((i == 0) && (images[i] != null) && (images[i].Length > 0))
-                    {    
-                        var uploads = Path.GetFullPath(Path.Combine(GlobalVariables.ImagePath, @"images\payment"));                  
-                        var file = images[i];
-                        if (file.Length > 0)
-                        {
-                            var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim();
-                            string uniqueFileName = paymentNotification.FirstName.Substring(0,5) + i + DateTime.Now + file.FileName;
-                            string uniqueFileNameTrimmed = uniqueFileName.Replace(":", "").Replace("-", "").Replace(" ", "").Replace("/", "");
-
-                            using (var fileStream = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
-                            {
-                                await file.CopyToAsync(fileStream);
-                                paymentNotification.ImageNames = uniqueFileNameTrimmed;
-
-                                if (file.ContentType.StartsWith("image")) {
-                                    int width = 200;
-                                    int height = 200;
-                                    originalFile = new Bitmap(fileStream);
-                                    resizedFile = ResizeImage.GetResizedImage(fileStream,width,height,width,height);
-                                }   
-                            }
-
-                            if (resizedFile != null)
-                            {
-                                imgWidth = resizedFile.Width;
-                                imgHeigth = resizedFile.Height;
-                                using (var fileStreamUp = new FileStream(Path.Combine(uploads, uniqueFileNameTrimmed), FileMode.Create))
-                                {
-                                    resizedFile.Save(fileStreamUp, ImageFormat.Jpeg);
-                                }
-                            }
-                        }
-                    }                    
-                }                             
-            }   
-
-            DateTime userLocalDate_Nigeria = new DateTime();
-            string windowsTimeZone = GetWindowsFromOlson.GetWindowsFromOlsonFunc("Africa/Lagos");
-            userLocalDate_Nigeria = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZone));                       
-            paymentNotification.DateEdited = userLocalDate_Nigeria;
-
-            _context.PaymentNotifications.Update(paymentNotification);
-            await _context.SaveChangesAsync();
-
-            //ThreadPool.QueueUserWorkItem(o => {
-                string body = "Dear " + paymentNotification.FirstName + ",<br/><br/>Thank you for updating your payment notification.<br/><br/>" +
-                    "We will check your updated payment notification and update your online profile.<br/><br/>" + 
-                    "You will also receive an email from us as soon as we have taken any action on your updated payment notification<br/><br/>" +
-                    "Thanks,<br/>The RotatePay Team<br/>";          
-                var message = new Message(new string[] { paymentNotification.Email }, "[RotatePay] Updated Payment Notification Received", body, null);
-                _emailSenderService.SendEmail(message);     
-
-                string body1 = paymentNotification.FirstName + "(" + paymentNotification.Email + ") has updated their payment notification with reference " + paymentNotification.Reference + ".<br/><br/><br/>";
-                var message1 = new Message(new string[] { GlobalVariables.AdminEmail }, "[RotatePay] Updated Payment Notification by " + paymentNotification.Email, body1, images);
-                _emailSenderService.SendEmail(message1);
-            //});   
-
-            //await _logService.Create(log);
-            return paymentNotification;            
-        }        
-
-
-        public async Task<List<PaymentNotification>> GetPaymentNotificationsByHiDee(string type,string hiDee)
-        {
-            var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
-            if (user == null) {
-                throw new AppException("User is not found");
-            }              
-
-            if (user.HiDee.Equals(GlobalVariables.BaseKey())) {
-                if (type == "All") {
-                    return await _context.PaymentNotifications.OrderByDescending(x => x.DateAdded).ToListAsync();
-                } else {
-                    return await _context.PaymentNotifications.Where(x => x.Type == type)
-                        .OrderByDescending(x => x.DateAdded).ToListAsync();
-                }                
-            } else {
-                if (type == "All") {
-                    return await _context.PaymentNotifications.Where(x => x.Email == user.Email)
-                        .OrderByDescending(x => x.DateAdded).ToListAsync();
-                } else {
-                    return await _context.PaymentNotifications.Where(x => (x.Email == user.Email) && (x.Type == type))
-                        .OrderByDescending(x => x.DateAdded).ToListAsync();
-                }             
-            }               
-        }    
-
-        public async Task<List<Transaction>> GetTransactionsByHiDee(string type,string hiDee)
-        {
-            var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
-            if (user == null) {
-                throw new AppException("User is not found");
-            }              
-
-            if (user.HiDee.Equals(GlobalVariables.BaseKey())) {
-                if (type == "All") {
-                    return await _context.Transactions.OrderByDescending(x => x.DateAdded).ToListAsync();
-                } else {
-                    return await _context.Transactions.Where(x => x.Type == type)
-                        .OrderByDescending(x => x.DateAdded).ToListAsync();
-                }                
-            } else {
-                if (type == "All") {
-                    return await _context.Transactions.Where(x => x.Email == user.Email)
-                        .OrderByDescending(x => x.DateAdded).ToListAsync();
-                } else {
-                    return await _context.Transactions.Where(x => (x.Email == user.Email) && (x.Type == type))
-                        .OrderByDescending(x => x.DateAdded).ToListAsync();
-                }             
-            }               
-        }                         
-
         public async Task Delete(int id)
         {                  
             var user = await _context.Users.FindAsync(id);
-            if (user != null) {
+            if (user != null || ((user != null) && (!user.HiDee.Equals(GlobalVariables.BaseKey())))) {
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
             }

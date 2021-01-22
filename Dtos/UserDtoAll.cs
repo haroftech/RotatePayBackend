@@ -14,7 +14,8 @@ namespace Backend.Dtos
         public string State { get; set; } 
         public string Country { get; set; }                     
         public string ImageNames { get; set; }          
-        public double ContributionAmount { get; set;}     
+        public double ContributionAmount { get; set;}    
+        public Boolean GuaranteeSuccessful { get; set; }   
         public Boolean CanGuarantee { get; set; }
         public Boolean EmailConfirmed { get; set;}                           
         public string LastSeenDisplay { get; set; }       

@@ -197,15 +197,6 @@ namespace Backend.Controllers
                 
         }
 
-        [HttpGet("gal")]
-        public async Task<IActionResult> GetAll()
-        {
-             
-            var users = await _userService.GetAll();
-            var userDtoAdmin = _mapper.Map<IList<UserDtoAdmin>>(users);
-            return Ok(userDtoAdmin);
-        }                
-
         [HttpPut("upd")]
         public async Task<IActionResult> Update([FromForm]UserDtoAdmin userDtoAdmin)
         {
@@ -243,9 +234,27 @@ namespace Backend.Controllers
         public async Task<IActionResult> GetByHiDee([FromForm]UserDtoAdmin userDtoAdmin)
         {             
             var user =  await _userService.GetByHiDee(userDtoAdmin.HiDee);
-            var userDtoAdminn = _mapper.Map<UserDtoAdmin>(user);
-            return Ok(userDtoAdminn);
-        }      
+            if (userDtoAdmin.HiDee.Equals(GlobalVariables.BaseKey())) {
+                var userDtoAdminn = _mapper.Map<IList<UserDtoAdmin>>(user);
+                return Ok(userDtoAdminn);
+            } else {
+                var userDtoUser = _mapper.Map<IList<UserDtoUser>>(user);
+                return Ok(userDtoUser);
+            }
+        }   
+
+        [HttpPost("cngrtee")]
+        public async Task<IActionResult> CanGuarantee([FromForm]UserDtoAdmin userDtoAdmin)
+        {             
+            var user =  await _userService.CanGuarantee(userDtoAdmin.HiDee,userDtoAdmin.UserHiDee);
+            if (userDtoAdmin.HiDee.Equals(GlobalVariables.BaseKey())) {
+                var userDtoAdminn = _mapper.Map<IList<UserDtoAdmin>>(user);
+                return Ok(userDtoAdminn);
+            } else {
+                var userDtoUser = _mapper.Map<IList<UserDtoUser>>(user);
+                return Ok(userDtoUser);
+            }
+        }              
 
         [HttpPut("uui")]
         public async Task<IActionResult> UpdateUserInfo([FromForm]UserDtoAdmin userDtoAdmin)
@@ -261,68 +270,6 @@ namespace Backend.Controllers
                 return BadRequest(ex.Message);
             }
         }                        
-
-        [HttpPost("adpayn")]
-        public async Task<IActionResult> AddPaymentNotification([FromForm]PaymentNotificationDto paymentNotificationDto)
-        {
-            try 
-            {                       
-                var paymentNotification = _mapper.Map<PaymentNotification>(paymentNotificationDto);                    
-                var userAddedPaymentNotification = await _userService.AddPaymentNotification(paymentNotification,paymentNotificationDto.Images);
-
-                var tokenString = "";
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new Claim[] 
-                    {
-                        new Claim(ClaimTypes.Name, userAddedPaymentNotification.Id.ToString())
-                    }),
-                    Expires = DateTime.UtcNow.AddDays(365),
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                tokenString = tokenHandler.WriteToken(token);    
-
-                var userDtoUser = _mapper.Map<UserDtoUser>(userAddedPaymentNotification);
-                userDtoUser.Token = tokenString;
-                return Ok(userDtoUser);          
-            } 
-            catch(AppException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }   
-
-        [HttpPost("updpayn")]
-        public async Task<IActionResult> UpdatePaymentNotification([FromForm]PaymentNotificationDto paymentNotificationDto)
-        {
-            try 
-            {                       
-                var paymentNotification = _mapper.Map<PaymentNotification>(paymentNotificationDto);                    
-                var updatedPaymentNotification = await _userService.UpdatePaymentNotification(paymentNotification,paymentNotificationDto.Images);
-                return Ok(updatedPaymentNotification);          
-            } 
-            catch(AppException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }   
-
-        [HttpPost("paynbhde")]
-        public async Task<IActionResult> GetPaymentNotificationsByHiDee([FromForm]PaymentNotificationDto paymentNotificationDto)
-        {             
-            var paymentNotificationByHiDee = await _userService.GetPaymentNotificationsByHiDee(paymentNotificationDto.Type,paymentNotificationDto.UserHiDee);
-            return Ok(paymentNotificationByHiDee);
-        }    
-
-        [HttpPost("trnsbhde")]
-        public async Task<IActionResult> GetTransactionsByHiDee([FromForm]TransactionDto transactionDto)
-        {             
-            var transactionByHiDee = await _userService.GetTransactionsByHiDee(transactionDto.Type,transactionDto.UserHiDee);
-            return Ok(transactionByHiDee);
-        }             
 
         [HttpDelete("del")]
         public async Task<IActionResult> Delete([FromForm]UserDtoAdmin userDtoAdmin)

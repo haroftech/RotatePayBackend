@@ -5,6 +5,8 @@ namespace Backend.Dtos
 {
     public class UserDtoAdmin
     {
+        public string UserHiDee { get; set; }  
+
         public int Id { get; set; }
         public string HiDee { get; set; }
         public string Surname { get; set; }
@@ -27,10 +29,13 @@ namespace Backend.Dtos
         public string Role { get; set; }   
         public DateTime DateOfBirth { get; set; }
         public double ContributionAmount { get; set;} 
-        public double ContributionAmountLocked { get; set;}               
+        public double ContributionAmountLocked { get; set;} // Locked when guarantee is requested and remains locked no guarantee is requested              
         public Boolean CanGuaranteeRequested { get; set; }
-        public Boolean GuaranteeLocked { get; set; }
-        public Boolean CanGuarantee { get; set; }        
+        public Boolean CanGuarantee { get; set; }            
+        public Boolean GuaranteeLocked { get; set; } // Locked after all guarantors agrees to give a guarantee and remains locked until a guarantor withdraws (after the contribution cycle)                  
+        public Boolean GuaranteeSuccessful { get; set; }    
+        public Boolean ActivationRequested { get; set; } 
+        public Boolean ActivationFeePaid { get; set; }      
         //public string BVN { get; set; } // Can be useful leter so do not delete         
         //public string Integration { get; set; } // Can be useful leter so do not delete      
         //public string SubAccountCode { get; set; } // Can be useful leter so do not delete           

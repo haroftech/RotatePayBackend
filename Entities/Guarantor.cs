@@ -10,7 +10,10 @@ namespace Backend.Entities
         public string Status { get; set; }
         public string GuarantorEmail { get; set; }
         public string GuaranteeEmail { get; set; }
+        public double ContributionAmount { get; set; }
+        public Boolean DeleteAllowed { get; set; }    
         public DateTime DateAdded { get; set; }
+        public DateTime DateEdited { get; set; }           
         public string DateAddedDisplay 
         {
             get

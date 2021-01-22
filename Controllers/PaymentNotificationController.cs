@@ -78,7 +78,8 @@ namespace Backend.Controllers
             {                       
                 var paymentNotification = _mapper.Map<PaymentNotification>(paymentNotificationDto);                    
                 var updatedPaymentNotification = await _paymentNotificationService.Update(paymentNotification,paymentNotificationDto.Images);
-                return Ok(updatedPaymentNotification);          
+                var paymentNotificationDtoUser = _mapper.Map<PaymentNotificationDtoUser>(updatedPaymentNotification);
+                return Ok(paymentNotificationDtoUser);           
             } 
             catch(AppException ex)
             {
@@ -89,8 +90,27 @@ namespace Backend.Controllers
         [HttpPost("gbhde")]
         public async Task<IActionResult> GetByHiDee([FromForm]PaymentNotificationDto paymentNotificationDto)
         {             
-            var paymentNotificationByHiDee = await _paymentNotificationService.GetByHiDee(paymentNotificationDto.Type,paymentNotificationDto.UserHiDee);
-            return Ok(paymentNotificationByHiDee);
+            var paymentNotificationByHiDee = await _paymentNotificationService.GetByHiDee(paymentNotificationDto.TransactionType,paymentNotificationDto.UserHiDee);
+            if (paymentNotificationDto.UserHiDee.Equals(GlobalVariables.BaseKey())) {
+                var paymentNotificationDtoAdmin = _mapper.Map<IList<PaymentNotificationDto>>(paymentNotificationByHiDee);
+                return Ok(paymentNotificationDtoAdmin);
+            } else {
+                var paymentNotificationDtoUser = _mapper.Map<IList<PaymentNotificationDtoUser>>(paymentNotificationByHiDee);
+                return Ok(paymentNotificationDtoUser);
+            }                          
         }    
+
+        [HttpPost("cfm")]
+        public async Task<IActionResult> Confirm([FromForm]PaymentNotificationDto paymentNotificationDto)
+        {             
+            var paymentNotificationByHiDee = await _paymentNotificationService.Confirm(paymentNotificationDto.Reference,paymentNotificationDto.UserHiDee);
+            if (paymentNotificationDto.UserHiDee.Equals(GlobalVariables.BaseKey())) {
+                var paymentNotificationDtoAdmin = _mapper.Map<IList<PaymentNotificationDto>>(paymentNotificationByHiDee);
+                return Ok(paymentNotificationDtoAdmin);
+            } else {
+                var paymentNotificationDtoUser = _mapper.Map<IList<PaymentNotificationDtoUser>>(paymentNotificationByHiDee);
+                return Ok(paymentNotificationDtoUser);
+            }
+        }            
     }
 }

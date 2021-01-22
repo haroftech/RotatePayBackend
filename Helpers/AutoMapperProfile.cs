@@ -15,7 +15,11 @@ namespace Backend.Helpers
             CreateMap<User, UserDtoAdmin>();
             CreateMap<UserDtoAdmin, User>(); 
             CreateMap<PaymentNotification, PaymentNotificationDto>();
-            CreateMap<PaymentNotificationDto, PaymentNotification>();                                     
+            CreateMap<PaymentNotificationDto, PaymentNotification>();  
+            CreateMap<Transaction, TransactionDto>();
+            CreateMap<TransactionDto, Transaction>();                     
+            CreateMap<Guarantor, GuarantorDto>();
+            CreateMap<GuarantorDto, Guarantor>();                                                 
         }
     }
 }

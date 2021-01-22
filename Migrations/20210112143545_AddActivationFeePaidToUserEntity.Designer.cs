@@ -4,14 +4,16 @@ using Backend.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Backend.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20210112143545_AddActivationFeePaidToUserEntity")]
+    partial class AddActivationFeePaidToUserEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,17 +28,8 @@ namespace Backend.Migrations
                         .HasColumnType("int")
                         .UseIdentityColumn();
 
-                    b.Property<double>("ContributionAmount")
-                        .HasColumnType("float");
-
                     b.Property<DateTime>("DateAdded")
                         .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateEdited")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("DeleteAllowed")
-                        .HasColumnType("bit");
 
                     b.Property<string>("GuaranteeEmail")
                         .HasColumnType("nvarchar(max)");
@@ -155,7 +148,7 @@ namespace Backend.Migrations
                     b.Property<string>("Reference")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TransactionType")
+                    b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("UpdateAllowed")
@@ -221,6 +214,9 @@ namespace Backend.Migrations
                     b.Property<string>("TransactionType")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Transactions");
@@ -237,9 +233,6 @@ namespace Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("ActivationFeePaid")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("ActivationRequested")
                         .HasColumnType("bit");
 
                     b.Property<string>("BVN")

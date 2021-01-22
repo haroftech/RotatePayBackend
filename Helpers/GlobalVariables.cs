@@ -73,7 +73,7 @@ namespace Backend.Helpers
 
         public static string BaseKey()
         {
-            return "tEAyznj3kucbinvrQcIhxA8WLPiHgHb";
+            return "NXzoblhBk3z26TcZuLhWiGP4R2fiLFL";
         }            
     }
 }

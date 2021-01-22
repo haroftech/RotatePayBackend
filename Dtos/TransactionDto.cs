@@ -6,11 +6,9 @@ namespace Backend.Dtos
 {
     public class TransactionDto
     {
-        public string UserHiDee { get; set; }    
-                
+        public string UserHiDee { get; set; }                
         public int Id { get; set; }        
         public string Reference { get; set; }         
-        public string Type { get; set; } 
         public string TransactionType { get; set; } 
         public string Email { get; set; }
         public double AmountPaid { get; set; }         

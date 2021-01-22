@@ -25,7 +25,8 @@ namespace Backend.Services
     {
         Task<User> Add(PaymentNotification paymentNotification,IFormFile[] images);
         Task<PaymentNotification> Update(PaymentNotification paymentNotification,IFormFile[] images);
-        Task<List<PaymentNotification>> GetByHiDee(string type,string hiDee);
+        Task<List<PaymentNotification>> GetByHiDee(string transactionType,string hiDee);
+        Task<List<PaymentNotification>> Confirm(string reference,string hiDee);
     }
 
     public class PaymentNotificationService : IPaymentNotificationService
@@ -33,15 +34,18 @@ namespace Backend.Services
         private DataContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly IEmailSenderService _emailSenderService;
+        private readonly ITransactionService _transactionService;
         private readonly IMemoryCache memoryCache;  
         private IConfiguration _configuration;
 
-        public PaymentNotificationService(DataContext context,IWebHostEnvironment environment,
-            IEmailSenderService emailSenderService,IMemoryCache memoryCache,IConfiguration configuration)
+        public PaymentNotificationService(DataContext context,IWebHostEnvironment environment, 
+            ITransactionService transactionService,IEmailSenderService emailSenderService,
+            IMemoryCache memoryCache,IConfiguration configuration)
         {
             _context = context;
             _environment = environment;
             _emailSenderService = emailSenderService;
+            _transactionService = transactionService;
             this.memoryCache = memoryCache;
             _configuration = configuration;
         }           
@@ -131,10 +135,10 @@ namespace Backend.Services
             paymentNotification.Confirmed = "No";
             paymentNotification.UpdateAllowed = true;
             await _context.PaymentNotifications.AddAsync(paymentNotification);
-
-            user.ContributionLimitRequested = true;
-            _context.Users.Update(user);
-
+            if (paymentNotification.TransactionType == "Activation") {
+                user.ActivationRequested = true;
+                _context.Users.Update(user);
+            }            
             await _context.SaveChangesAsync();
 
             //ThreadPool.QueueUserWorkItem(o => {
@@ -146,7 +150,7 @@ namespace Backend.Services
                 _emailSenderService.SendEmail(message);     
 
                 string body1 = paymentNotification.FirstName + "(" + paymentNotification.Email + ") has submitted the payment notification form.<br/><br/><br/>";
-                var message1 = new Message(new string[] { GlobalVariables.AdminEmail }, "[RotatePay] Payment document by " + paymentNotification.Email, body1, images);
+                var message1 = new Message(new string[] { GlobalVariables.AdminEmail }, "[RotatePay] Payment receipt by " + paymentNotification.Email, body1, images);
                 _emailSenderService.SendEmail(message1);
             //});   
 
@@ -254,10 +258,9 @@ namespace Backend.Services
 
             //await _logService.Create(log);
             return paymentNotification;            
-        }        
+        } 
 
-
-        public async Task<List<PaymentNotification>> GetByHiDee(string type,string hiDee)
+        public async Task<List<PaymentNotification>> GetByHiDee(string transactionType,string hiDee)
         {
             var user = await _context.Users.Where(x => x.HiDee == hiDee).FirstOrDefaultAsync();
             if (user == null) {
@@ -265,21 +268,65 @@ namespace Backend.Services
             }              
 
             if (user.HiDee.Equals(GlobalVariables.BaseKey())) {
-                if (type == "All") {
+                if (transactionType == "All") {
                     return await _context.PaymentNotifications.OrderByDescending(x => x.DateAdded).ToListAsync();
                 } else {
-                    return await _context.PaymentNotifications.Where(x => x.Type == type)
+                    return await _context.PaymentNotifications.Where(x => x.TransactionType == transactionType)
                         .OrderByDescending(x => x.DateAdded).ToListAsync();
                 }                
             } else {
-                if (type == "All") {
+                if (transactionType == "All") {
                     return await _context.PaymentNotifications.Where(x => x.Email == user.Email)
                         .OrderByDescending(x => x.DateAdded).ToListAsync();
                 } else {
-                    return await _context.PaymentNotifications.Where(x => (x.Email == user.Email) && (x.Type == type))
+                    return await _context.PaymentNotifications.Where(x => (x.Email == user.Email) && (x.TransactionType== transactionType))
                         .OrderByDescending(x => x.DateAdded).ToListAsync();
                 }             
             }               
         }          
+
+        public async Task<List<PaymentNotification>> Confirm(string reference,string hiDee)
+        {
+            var paymentNotification = await _context.PaymentNotifications.Where(x => x.Reference == reference).FirstOrDefaultAsync();  
+            if (paymentNotification == null) {
+                throw new AppException("Payment notification is not found");
+            }
+
+            var user = await _context.Users.Where(x => x.Email == paymentNotification.Email).FirstOrDefaultAsync();
+            if (user == null || ((user != null) && (!hiDee.Equals(GlobalVariables.BaseKey())))) {
+                throw new AppException("User is not found");
+            }            
+
+            if (paymentNotification.Confirmed == "Yes") {
+                paymentNotification.Confirmed = "No";
+                paymentNotification.UpdateAllowed = true;
+                await _transactionService.Delete(paymentNotification.Reference);
+                if (paymentNotification.TransactionType == "Activation") {
+                    user.ActivationRequested = true;
+                    user.ActivationFeePaid = false;
+                }                       
+            } else {
+                paymentNotification.Confirmed = "Yes";
+                paymentNotification.UpdateAllowed = false;
+                var transaction = new Transaction {
+                    Reference = paymentNotification.Reference,
+                    TransactionType = paymentNotification.TransactionType,
+                    Email = paymentNotification.Email,
+                    AmountPaid = paymentNotification.AmountPaid,
+                    PaymentChannel = paymentNotification.PaymentChannel
+                };
+                await _transactionService.Add(transaction);    
+                if (paymentNotification.TransactionType == "Activation") {
+                    user.ActivationRequested = true;
+                    user.ActivationFeePaid = true;
+                }                                     
+            }
+
+            _context.PaymentNotifications.Update(paymentNotification);
+            _context.Users.Update(user);            
+            await _context.SaveChangesAsync();    
+            
+            return await _context.PaymentNotifications.OrderByDescending(x => x.DateAdded).ToListAsync();     
+        }         
     }
 }

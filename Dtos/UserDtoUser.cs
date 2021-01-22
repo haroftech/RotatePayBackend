@@ -5,7 +5,6 @@ namespace Backend.Dtos
 {
     public class UserDtoUser
     {
-        public int Id { get; set; }
         public string HiDee { get; set; }
         public string Surname { get; set; }
         public string FirstName { get; set; }
@@ -19,25 +18,19 @@ namespace Backend.Dtos
         public string PlaceOfWorkName { get; set; }         
         public string PlaceOfWorkAddress { get; set; }                  
         public string BankName { get; set; } 
-        public string AccountNumber { get; set; } 
-        public string BankCode { get; set; }      
+        public string AccountNumber { get; set; }   
         public string ImageNames { get; set; }   
         public string Role { get; set; }     
         public DateTime DateOfBirth { get; set; }         
         public double ContributionAmount { get; set;}   
-        public double ContributionAmountLocked { get; set;}   
+        public double ContributionAmountLocked { get; set;} // Locked when guarantee is requested and remains locked no guarantee is requested              
         public Boolean CanGuaranteeRequested { get; set; }
-        public Boolean GuaranteeLocked { get; set; }
-        public Boolean CanGuarantee { get; set; }
-        //public string BVN { get; set; } // Do not delete     
-        //public double DesiredContributionAmount { get; set;} // Do not delete                 
-        //public Boolean ContributionLimitSet { get; set;} // Do not delete  
-        //public Boolean OptOutOfContributionLimit { get; set;} // Do not delete  
-        //public double ContributionLimit { get; set;} // Do not delete  
-        //public Boolean ContributionLimitRequested { get; set;} // Do not delete  
+        public Boolean CanGuarantee { get; set; }            
+        public Boolean GuaranteeLocked { get; set; } // Locked after all guarantors agrees to give a guarantee and remains locked until a guarantor withdraws (after the contribution cycle)                  
+        public Boolean GuaranteeSuccessful { get; set; }  
+        public Boolean ActivationRequested { get; set; }
+        public Boolean ActivationFeePaid { get; set; }  
         public Boolean EmailConfirmed { get; set; }
-        public string Token { get; set; }      
-        public string LastSeenDisplay { get; set; }       
-        public string DateAddedDisplay { get; set; }        
+        public string Token { get; set; }        
     }
 }
